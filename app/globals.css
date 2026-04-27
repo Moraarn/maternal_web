@@ -1,0 +1,130 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* CSS Variables for Theme */
+:root {
+  --color-primary: #0d6e40;
+  --color-primary-dark: #10b981;
+  --color-primary-light: #059669;
+  --color-danger: #b91c1c;
+  --color-warning: #b45309;
+  --color-background: #ffffff;
+  --color-background-dark: #111827;
+  --color-surface: #f5f5f4;
+  --color-surface-dark: #1f2937;
+  --color-border: #e5e7eb;
+  --color-border-dark: #374151;
+  --color-text-primary: #111827;
+  --color-text-primary-dark: #f9fafb;
+  --color-text-secondary: #6b7280;
+  --color-text-secondary-dark: #9ca3af;
+  --color-green-light: #e8f5ee;
+  --color-green-light-dark: #064e3b;
+  --color-amber-light: #fef3cd;
+  --color-amber-light-dark: #78350f;
+  --color-red-light: #fde8e8;
+  --color-red-light-dark: #7f1d1d;
+}
+
+[data-theme="dark"] {
+  --color-primary: #10b981;
+  --color-background: #111827;
+  --color-surface: #1f2937;
+  --color-border: #374151;
+  --color-text-primary: #f9fafb;
+  --color-text-secondary: #9ca3af;
+  --color-green-light: #064e3b;
+  --color-amber-light: #78350f;
+  --color-red-light: #7f1d1d;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-background text-text-primary font-sans antialiased;
+    background-color: var(--color-background);
+    color: var(--color-text-primary);
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+  
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+  
+  /* Dark mode transitions */
+  * {
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+  }
+}
+
+@layer components {
+  .phone-container {
+    @apply w-phone min-h-screen-dvh mx-auto shadow-lg;
+    background-color: var(--color-background);
+  }
+  
+  .status-bar {
+    @apply h-12 text-white flex items-center justify-between px-4 font-medium;
+    background-color: var(--color-primary);
+  }
+  
+  .bottom-nav {
+    @apply h-14 border-t border-border flex items-center justify-around;
+    background-color: var(--color-background);
+    border-color: var(--color-border);
+  }
+  
+  .nav-tab {
+    @apply flex flex-col items-center justify-center gap-1 py-1 px-3 transition-colors;
+    color: var(--color-text-secondary);
+  }
+  
+  .nav-tab.active {
+    color: var(--color-primary);
+  }
+  
+  .btn-primary {
+    @apply py-3 px-6 rounded-xl font-medium transition-colors disabled:opacity-40 disabled:pointer-events-none;
+    background-color: var(--color-primary);
+    color: white;
+  }
+  
+  .btn-primary:hover:not(:disabled) {
+    opacity: 0.9;
+  }
+  
+  .btn-outline {
+    @apply py-3 px-6 rounded-xl font-medium transition-colors disabled:opacity-40 disabled:pointer-events-none;
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+    background-color: transparent;
+  }
+  
+  .btn-outline:hover:not(:disabled) {
+    background-color: var(--color-green-light);
+  }
+  
+  .risk-badge-low {
+    @apply px-3 py-1 rounded-full text-sm font-medium;
+    background-color: var(--color-green-light);
+    color: var(--color-green-dark);
+  }
+  
+  .risk-badge-medium {
+    @apply px-3 py-1 rounded-full text-sm font-medium;
+    background-color: var(--color-amber-light);
+    color: var(--color-amber-dark);
+  }
+  
+  .risk-badge-high {
+    @apply px-3 py-1 rounded-full text-sm font-medium;
+    background-color: var(--color-red-light);
+    color: var(--color-red-dark);
+  }
+}
