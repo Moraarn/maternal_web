@@ -3,30 +3,18 @@
 import { useState } from 'react'
 import Button from '@/components/ui/Button'
 import { UserStatus, Trimester } from '@/store/useStore'
-
-interface SignupData {
-  fullName: string
-  phone: string
-  location: string
-  password: string
-  status: UserStatus
-  trimester?: Trimester
-  chwName: string
-  chwPhone: string
-  emergencyContactName: string
-  emergencyContactPhone: string
-}
+import { register, RegisterData } from '@/app/auth/actions'
 
 interface SignupStepperProps {
   onSwitchToLogin: () => void
-  onSuccess: (data: SignupData) => void
+  onSuccess: (data: RegisterData) => void
 }
 
 export default function SignupStepper({ onSwitchToLogin, onSuccess }: SignupStepperProps) {
   const [currentStep, setCurrentStep] = useState(1)
   const [isLoading, setIsLoading] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
-  const [formData, setFormData] = useState<SignupData>({
+  const [formData, setFormData] = useState<RegisterData>({
     fullName: '',
     phone: '',
     location: '',
@@ -39,8 +27,8 @@ export default function SignupStepper({ onSwitchToLogin, onSuccess }: SignupStep
     emergencyContactPhone: '',
   })
 
-  const updateFormData = (updates: Partial<SignupData>) => {
-    setFormData(prev => ({ ...prev, ...updates }))
+  const updateFormData = (updates: Partial<RegisterData>) => {
+    setFormData((prev: RegisterData) => ({ ...prev, ...updates }))
   }
 
   const handleSubmit = async () => {
@@ -53,32 +41,17 @@ export default function SignupStepper({ onSwitchToLogin, onSuccess }: SignupStep
     setIsSubmitted(true)
     
     try {
-      // TODO: Implement actual API call
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      })
+      const data = await register(formData)
+      console.log('Registration successful:', data)
       
-      if (response.ok) {
-        const data = await response.json()
-        // Use setToken to set both localStorage and cookie
-        const { setToken } = await import('@/lib/auth')
-        setToken(data.token)
-        onSuccess(formData)
-        // Hard redirect immediately - don't wait for anything
-        window.location.href = '/home'
-      } else {
-        console.error('Registration failed')
-        setIsLoading(false)
-        setIsSubmitted(false)
-      }
+      onSuccess(formData)
+      // Hard redirect immediately - don't wait for anything
+      window.location.href = '/home'
     } catch (error) {
       console.error('Registration error:', error)
       setIsLoading(false)
       setIsSubmitted(false)
+      // TODO: Show error message to user
     }
   }
 

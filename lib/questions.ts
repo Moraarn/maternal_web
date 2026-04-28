@@ -8,7 +8,10 @@ export interface Question {
 }
 
 export const getQuestions = (status: UserStatus, trimester?: Trimester): Question[] => {
-  if (status === 'pregnant') {
+  // Handle postpartum_early as postpartum for consistency
+  const normalizedStatus = status === 'postpartum_early' ? 'postpartum' : status;
+  
+  if (normalizedStatus === 'pregnant') {
     return [
       {
         id: 1,
@@ -33,35 +36,83 @@ export const getQuestions = (status: UserStatus, trimester?: Trimester): Questio
         tag: 'Preeclampsia check',
         text: 'Do you feel pain in the upper part of your belly?',
         hint: 'A dull or sharp pain under your ribs — not baby movement'
+      },
+      {
+        id: 5,
+        tag: 'Bleeding check',
+        text: 'Are you bleeding from your vagina?',
+        hint: 'Any amount of blood, even spotting'
+      },
+      {
+        id: 6,
+        tag: 'Infection check',
+        text: 'Do you have fever or chills?',
+        hint: 'Temperature above 38°C or feeling very cold'
+      },
+      {
+        id: 7,
+        tag: 'Baby movement check',
+        text: 'Have you felt your baby move less than usual today?',
+        hint: 'Fewer kicks, rolls, or flutters than normal'
+      },
+      {
+        id: 8,
+        tag: 'Water break check',
+        text: 'Are you leaking fluid from your vagina?',
+        hint: 'A gush or trickle of fluid that doesn\'t stop'
       }
     ]
   }
   
-  if (status === 'postpartum_early') {
+  if (normalizedStatus === 'postpartum') {
     return [
       {
-        id: 1,
-        tag: 'Bleeding check',
-        text: 'Are you soaking more than 2 pads in one hour?',
-        hint: 'This is considered heavy postpartum bleeding'
+        id: 9,
+        tag: 'Postpartum hemorrhage',
+        text: 'Are you bleeding heavily from your vagina?',
+        hint: 'Soaking through more than one pad per hour'
       },
       {
-        id: 2,
-        tag: 'Bleeding check',
-        text: 'Do you feel dizzy or faint when you stand up?',
-        hint: 'Feeling lightheaded or like you might fall'
+        id: 10,
+        tag: 'Postpartum infection',
+        text: 'Do you have fever or chills?',
+        hint: 'Temperature above 38°C or feeling very cold'
       },
       {
-        id: 3,
-        tag: 'Infection check',
-        text: 'Do you have a fever or feel very hot and cold?',
-        hint: 'Temperature above 38°C, or chills and shivering'
+        id: 11,
+        tag: 'Postpartum pain',
+        text: 'Do you have severe pain in your belly or bottom?',
+        hint: 'Pain that doesn\'t get better with pain medicine'
       },
       {
-        id: 4,
-        tag: 'Infection check',
-        text: 'Is there a bad smell from your vaginal discharge?',
-        hint: 'Foul-smelling discharge is a warning sign of infection'
+        id: 12,
+        tag: 'Mental health check',
+        text: 'Do you feel very sad or hopeless most of the time?',
+        hint: 'Feelings that last more than 2 weeks'
+      },
+      {
+        id: 13,
+        tag: 'Breastfeeding check',
+        text: 'Do you have pain, redness, or swelling in your breasts?',
+        hint: 'Any breast problems while breastfeeding'
+      },
+      {
+        id: 14,
+        tag: 'Newborn fever',
+        text: 'Does your baby feel hot to touch?',
+        hint: 'Baby\'s body feels unusually warm'
+      },
+      {
+        id: 15,
+        tag: 'Newborn feeding',
+        text: 'Is your baby having trouble feeding?',
+        hint: 'Not feeding well, refusing feeds, or very weak'
+      },
+      {
+        id: 16,
+        tag: 'Newborn breathing',
+        text: 'Is your baby having trouble breathing?',
+        hint: 'Fast breathing, grunting, or chest pulling in'
       }
     ]
   }

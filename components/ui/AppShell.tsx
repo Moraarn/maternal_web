@@ -1,3 +1,5 @@
+'use client'
+
 import { ReactNode } from 'react'
 import StatusBar from './StatusBar'
 import BottomNav from './BottomNav'

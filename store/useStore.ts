@@ -5,7 +5,7 @@ export type UserStatus = 'pregnant' | 'postpartum_early' | 'postpartum_late' | '
 export type Trimester = 'first' | 'second' | 'third' | 'term'
 export type RiskLevel = 'low' | 'medium' | 'high'
 
-interface User {
+export interface User {
   id: string
   phone: string
   fullName: string

@@ -30,11 +30,26 @@ export function useAuth() {
 
   useEffect(() => {
     // Check if user is authenticated on mount
-    const token = getToken()
-    if (!token) {
-      logout()
+    const validateSession = async () => {
+      const token = getToken()
+      if (!token) {
+        logout()
+        return
+      }
+
+      try {
+        // Validate token with backend and get current user
+        const response = await api.get('/auth/me')
+        setUser(response.data)
+      } catch (error) {
+        // Token is invalid, clear session
+        clearToken()
+        logout()
+      }
     }
-  }, [logout])
+
+    validateSession()
+  }, [logout, setUser])
 
   const login = async (credentials: LoginCredentials) => {
     setIsLoading(true)
@@ -42,9 +57,10 @@ export function useAuth() {
 
     try {
       const response = await api.post('/auth/login', credentials)
-      const { user, token } = response.data
-
-      setToken(token)
+      const { user } = response.data
+      // Token is now set as HTTP-only cookie by the backend
+      // Still set localStorage for backward compatibility
+      setToken('cookie-auth')
       setUser(user)
       
       return { success: true, user }
@@ -63,9 +79,10 @@ export function useAuth() {
 
     try {
       const response = await api.post('/auth/register', data)
-      const { user, token } = response.data
-
-      setToken(token)
+      const { user } = response.data
+      // Token is now set as HTTP-only cookie by the backend
+      // Still set localStorage for backward compatibility
+      setToken('cookie-auth')
       setUser(user)
       
       return { success: true, user }
@@ -78,10 +95,18 @@ export function useAuth() {
     }
   }
 
-  const logoutUser = () => {
-    clearToken()
-    logout()
-    router.push('/auth')
+  const logoutUser = async () => {
+    try {
+      // Call backend logout endpoint to clear HTTP-only cookie
+      await api.post('/auth/logout')
+    } catch (error) {
+      console.error('Logout error:', error)
+    } finally {
+      // Clear local storage and state
+      clearToken()
+      logout()
+      router.push('/auth')
+    }
   }
 
   return {

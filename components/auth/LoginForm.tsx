@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Button from '@/components/ui/Button'
 import { useStore } from '@/store/useStore'
+import { login, LoginCredentials } from '@/app/auth/actions'
 
 interface LoginFormProps {
   onSwitchToSignup: () => void
@@ -22,43 +23,25 @@ export default function LoginForm({ onSwitchToSignup, onSuccess }: LoginFormProp
     setIsLoading(true)
     
     try {
-      // TODO: Implement actual API call
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ phone, password }),
-      })
+      const credentials: LoginCredentials = { phone, password }
+      const data = await login(credentials)
       
-      if (response.ok) {
-        const data = await response.json()
-        console.log('Login successful, data:', data)
-        
-        // TODO: Fix auth library import issue
-        // setToken(data.token)
-        localStorage.setItem('continuum_token', data.token)
-        
-        // Set user data in store
-        if (data.user) {
-          console.log('Setting user in store:', data.user)
-          setUser(data.user)
-        }
-        
-        console.log('Calling onSuccess callback')
-        onSuccess()
-        
-        // Also try direct navigation as fallback
-        setTimeout(() => {
-          console.log('Attempting direct navigation to /home')
-          router.push('/home')
-        }, 100)
-      } else {
-        // Handle error
-        console.error('Login failed')
-      }
+      console.log('Login successful, data:', data)
+      
+      // Set user data in store
+      setUser(data.user)
+      
+      console.log('Calling onSuccess callback')
+      onSuccess()
+      
+      // Also try direct navigation as fallback
+      setTimeout(() => {
+        console.log('Attempting direct navigation to /home')
+        router.push('/home')
+      }, 100)
     } catch (error) {
       console.error('Login error:', error)
+      // TODO: Show error message to user
     } finally {
       setIsLoading(false)
     }
