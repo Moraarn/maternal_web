@@ -1,5 +1,5 @@
 import AppShell from '@/components/ui/AppShell'
-import ProfileClient from './ProfileClient'
+import ProfileClient from '../../components/profile/ProfileClient'
 
 export default function ProfilePage() {
   return (

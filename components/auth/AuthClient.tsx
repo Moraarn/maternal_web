@@ -6,7 +6,7 @@ import { useStore } from '@/store/useStore'
 import LoginForm from '@/components/auth/LoginForm'
 import SignupStepper from '@/components/auth/SignupStepper'
 import { UserStatus, Trimester, User } from '@/store/useStore'
-import { RegisterData } from '../../app/auth/actions'
+import { RegisterData, register } from '../../app/auth/actions'
 
 interface AuthClientProps {
   initialUser: User | null
@@ -15,15 +15,43 @@ interface AuthClientProps {
 export default function AuthClient({ initialUser }: AuthClientProps) {
   const [isLogin, setIsLogin] = useState(true)
   const [isNavigating, setIsNavigating] = useState(false)
+  const [hasHydrated, setHasHydrated] = useState(false)
   const router = useRouter()
-  const { setUser } = useStore()
+  const { user, setUser } = useStore()
 
-  // If user is already logged in, redirect to home
+  // Wait for Zustand store to hydrate
   useEffect(() => {
-    if (initialUser) {
-      router.push('/home')
+    const timer = setTimeout(() => setHasHydrated(true), 100)
+    return () => clearTimeout(timer)
+  }, [])
+
+  // Check for persisted user data after hydration
+  useEffect(() => {
+    if (!hasHydrated) return
+
+    console.log('🔍 [AuthClient] Checking authentication state:', {
+      hasHydrated,
+      initialUser: !!initialUser,
+      storeUser: !!user,
+    })
+
+    // Validate authentication using server-side check
+    const validateAndCheckAuth = async () => {
+      // Priority: 1. Server-provided user, 2. Store user, 3. No user (show auth)
+      if (initialUser) {
+        console.log('✅ [AuthClient] Using server-provided user, redirecting to home')
+        setUser(initialUser)
+        router.push('/home')
+      } else if (user) {
+        console.log('✅ [AuthClient] Using persisted store user, redirecting to home')
+        router.push('/home')
+      } else {
+        console.log('📝 [AuthClient] No user found, showing auth forms')
+      }
     }
-  }, [initialUser, router])
+
+    validateAndCheckAuth()
+  }, [hasHydrated, initialUser, user, router, setUser])
 
   const handleLoginSuccess = () => {
     console.log('Login successful, redirecting to home')
@@ -40,34 +68,24 @@ export default function AuthClient({ initialUser }: AuthClientProps) {
     }, 200)
   }
 
-  const handleSignupSuccess = (data: RegisterData) => {
+  const handleSignupSuccess = async () => {
     if (isNavigating) {
       console.log('Already navigating, ignoring duplicate call')
       return
     }
     
-    console.log('Signup successful:', data)
+    console.log('Backend registration successful, redirecting to home')
     setIsNavigating(true)
     
-    // Create user object for store
-    const user: User = {
-      id: Date.now().toString(), // Temporary ID
-      phone: data.phone,
-      fullName: data.fullName,
-      status: data.status as UserStatus,
-      trimester: data.trimester as Trimester | undefined,
-      chwName: data.chwName,
-      chwPhone: data.chwPhone,
-      emergencyContactName: data.emergencyContactName,
-      emergencyContactPhone: data.emergencyContactPhone,
-      location: data.location,
+    // Navigation is handled by the server action redirect
+    // This is just for cleanup and logging
+    try {
+      // The server action will handle the redirect to /home
+      console.log('Registration successful, waiting for server redirect')
+    } catch (error) {
+      console.error('Error during signup success handling:', error)
+      setIsNavigating(false)
     }
-    
-    // Set user and store token in localStorage directly
-    localStorage.setItem('continuum_token', 'mock-token-' + Date.now())
-    setUser(user)
-    console.log('User set in store')
-    // Navigation happens in SignupStepper with hard redirect
   }
 
   const switchToSignup = () => {

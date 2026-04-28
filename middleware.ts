@@ -18,7 +18,7 @@ export function middleware(request: NextRequest) {
   }
   
   // For protected routes, check for authentication via cookies
-  const token = request.cookies.get('continuum_token')?.value
+  const token = request.cookies.get('nab_continuum_token')?.value || request.cookies.get('continuum_token')?.value
   
   if (!token) {
     // Redirect to auth page if not authenticated

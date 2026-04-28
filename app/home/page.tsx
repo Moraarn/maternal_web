@@ -11,11 +11,13 @@ import Button from '@/components/ui/Button'
 import { getQuestions } from '@/lib/questions'
 import { calculateRisk, RiskResult } from '@/lib/riskEngine'
 import { Mic } from 'lucide-react'
+import { getCurrentUser } from '@/app/auth/actions'
 
 export default function HomePage() {
   const router = useRouter()
-  const { user, setLastCheckup, addToHistory } = useStore()
+  const { user, setUser, setLastCheckup, addToHistory } = useStore()
   const [hasHydrated, setHasHydrated] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
   const [answers, setAnswers] = useState<boolean[]>([])
@@ -37,12 +39,32 @@ export default function HomePage() {
   }, [])
 
   useEffect(() => {
-    // Only redirect to auth if store is hydrated and user is still null
-    if (hasHydrated && !user) {
-      router.push('/auth')
-      return
+    // Check authentication server-side if no user in store
+    const checkAuth = async () => {
+      if (!user) {
+        try {
+          const response = await getCurrentUser()
+          if (response.success && response.body) {
+            setUser(response.body as any)
+            console.log('User loaded from server and set in store')
+          } else {
+            // No valid authentication, redirect to auth
+            router.push('/auth')
+            return
+          }
+        } catch (error) {
+          console.error('Auth check failed:', error)
+          router.push('/auth')
+          return
+        }
+      }
+      setIsLoading(false)
     }
-  }, [user, router, hasHydrated])
+
+    if (hasHydrated) {
+      checkAuth()
+    }
+  }, [hasHydrated, user, router, setUser])
 
   const currentQuestion = questions[currentQuestionIndex]
   const progress = ((currentQuestionIndex + 1) / questions.length) * 100
@@ -138,8 +160,8 @@ export default function HomePage() {
     window.location.href = 'tel:999'
   }
 
-  // Show loading state while hydrating or if user/questions not ready
-  if (!hasHydrated || !user || questions.length === 0) {
+  // Show loading state while hydrating, checking auth, or if user/questions not ready
+  if (!hasHydrated || isLoading || !user || questions.length === 0) {
     return (
       <AppShell
         statusBar={{

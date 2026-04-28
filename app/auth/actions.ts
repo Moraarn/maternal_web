@@ -1,5 +1,9 @@
-import { setToken, clearToken } from '../../lib/auth'
-import { UserStatus, Trimester } from '@/store/useStore'
+'use server';
+
+import { redirect } from 'next/navigation';
+import { api } from '@/server/api';
+import { getCleanFormData, validateRedirectPath } from 'next-api-bridge/form';
+import { UserStatus, Trimester } from '@/store/useStore';
 
 export interface LoginCredentials {
   phone: string
@@ -37,130 +41,100 @@ export interface AuthResponse {
   message: string
 }
 
-export interface ApiError {
-  error: string
-  status?: number
+export interface ApiBridgeResponse<T = any> {
+  success: boolean
+  message: string
+  body: T | null
+  formdata?: any
 }
 
-export class AuthApiError extends Error {
-  constructor(message: string, public status?: number) {
-    super(message)
-    this.name = 'AuthApiError'
+export async function signIn(_prev: unknown, data: FormData) {
+  const body = getCleanFormData(data, { delete: ['redirectPath'] });
+  const response = await api.post('/auth/login', body);
+
+  if (response.success) {
+    redirect(validateRedirectPath(data.get('redirectPath') as string));
   }
+
+  return { formdata: body, ...response } as ApiBridgeResponse<AuthResponse['user']>;
 }
 
-async function handleResponse<T>(response: Response): Promise<T> {
-  const data = await response.json()
-  
-  if (!response.ok) {
-    throw new AuthApiError(data.error || 'Request failed', response.status)
+export async function signUp(_prev: unknown, data: FormData) {
+  const body = getCleanFormData(data, { delete: ['redirectPath'] });
+  const response = await api.post('/auth/register', body);
+
+  if (response.success) {
+    redirect(validateRedirectPath(data.get('redirectPath') as string));
   }
-  
-  return data
+
+  return { formdata: body, ...response } as ApiBridgeResponse<AuthResponse['user']>;
 }
 
+// Legacy functions for components that haven't been migrated yet
 export async function login(credentials: LoginCredentials): Promise<AuthResponse> {
-  const response = await fetch('http://localhost:5000/auth/login', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(credentials),
-  })
-
-  const data = await handleResponse<AuthResponse>(response)
+  const formData = new FormData();
+  formData.append('phone', credentials.phone);
+  formData.append('password', credentials.password);
   
-  // Store token on successful login
-  setToken(data.token)
+  const response = await signIn(null, formData);
   
-  return data
+  if (!response.success || !response.body) {
+    throw new Error(response.message || 'Login failed');
+  }
+  
+  return {
+    user: response.body,
+    token: 'handled-by-bridge',
+    message: response.message
+  };
 }
 
 export async function register(userData: RegisterData): Promise<AuthResponse> {
-  const response = await fetch('http://localhost:5000/auth/register', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(userData),
-  })
-
-  const data = await handleResponse<AuthResponse>(response)
-  
-  // Store token on successful registration
-  setToken(data.token)
-  
-  return data
-}
-
-export async function createOtp(phoneNumber: string): Promise<{ message: string; otp: string }> {
-  const response = await fetch('http://localhost:5000/auth/otp/create', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ phoneNumber }),
-  })
-
-  return handleResponse<{ message: string; otp: string }>(response)
-}
-
-export async function verifyOtp(phoneNumber: string, code: string): Promise<{ valid: boolean }> {
-  const response = await fetch('http://localhost:5000/auth/otp/verify', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ phoneNumber, code }),
-  })
-
-  return handleResponse<{ valid: boolean }>(response)
-}
-
-export async function logout(): Promise<void> {
-  try {
-    // Call backend logout endpoint if it exists
-    await fetch('http://localhost:5000/auth/logout', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    })
-  } catch (error) {
-    // Continue with client-side logout even if backend call fails
-    console.warn('Backend logout failed:', error)
-  }
-  
-  // Clear client-side token
-  clearToken()
-}
-
-export async function getCurrentUser(): Promise<AuthResponse['user'] | null> {
-  const token = localStorage.getItem('continuum_token')
-  
-  if (!token) {
-    return null
-  }
-
-  try {
-    const response = await fetch('http://localhost:5000/auth/me', {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-    })
-
-    if (response.ok) {
-      return handleResponse<AuthResponse['user']>(response)
-    } else {
-      // Token is invalid, clear it
-      clearToken()
-      return null
+  const formData = new FormData();
+  Object.entries(userData).forEach(([key, value]) => {
+    if (value !== undefined && value !== null) {
+      formData.append(key, value.toString());
     }
-  } catch (error) {
-    console.error('Failed to get current user:', error)
-    clearToken()
-    return null
+  });
+  
+  const response = await signUp(null, formData);
+  
+  if (!response.success || !response.body) {
+    throw new Error(response.message || 'Registration failed');
   }
+  
+  return {
+    user: response.body,
+    token: 'handled-by-bridge',
+    message: response.message
+  };
+}
+
+export async function validateToken(): Promise<boolean> {
+  try {
+    const response = await getCurrentUser();
+    return response.success && !!response.body;
+  } catch (error) {
+    return false;
+  }
+}
+
+export async function signOut() {
+  const response = await api.post('/auth/logout');
+  return response;
+}
+
+export async function getCurrentUser() {
+  const response = await api.get('/auth/me');
+  return response;
+}
+
+export async function createOtp(phoneNumber: string) {
+  const response = await api.post('/auth/otp/create', { phoneNumber });
+  return response;
+}
+
+export async function verifyOtp(phoneNumber: string, code: string) {
+  const response = await api.post('/auth/otp/verify', { phoneNumber, code });
+  return response;
 }

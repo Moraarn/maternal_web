@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import { useStore } from '@/store/useStore'
 import { useTheme } from '@/contexts/ThemeContext'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { getUserProfile, UserProfile } from '@/app/profile/actions'
+import { getCurrentUser } from '@/app/auth/actions'
 import HeroSection from '@/components/profile/HeroSection'
 import CheckupCard from '@/components/profile/CheckupCard'
 import StatsRow from '@/components/profile/StatsRow'
@@ -17,13 +19,16 @@ import SettingsModal from '@/components/profile/SettingsModal'
 
 export default function ProfileClient() {
   const router = useRouter()
-  const { user, lastCheckup, checkupHistory, logout } = useStore()
+  const { user, logout } = useStore()
   const { theme } = useTheme()
   const { t } = useLanguage()
   const [hasHydrated, setHasHydrated] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false)
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const timer = setTimeout(() => setHasHydrated(true), 100)
@@ -33,6 +38,48 @@ export default function ProfileClient() {
   useEffect(() => {
     if (hasHydrated && !user) router.push('/auth')
   }, [user, router, hasHydrated])
+
+  useEffect(() => {
+    if (hasHydrated && user) {
+      fetchUserProfile()
+    }
+  }, [hasHydrated, user])
+
+  const fetchUserProfile = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      
+      // Validate authentication using getCurrentUser
+      const userResponse = await getCurrentUser()
+      if (!userResponse.success || !userResponse.body) {
+        console.log('🚫 [ProfileClient] Invalid authentication, redirecting to auth')
+        logout()
+        router.push('/auth')
+        return
+      }
+      
+      const profile = await getUserProfile()
+      console.log('📊 [ProfileClient] Profile data received:', {
+        profile,
+        hasCheckHistory: !!profile.checkHistory,
+        checkHistoryLength: profile.checkHistory?.length || 0,
+        checkHistorySample: profile.checkHistory?.slice(0, 2),
+        hasLastCheckResult: !!profile.lastCheckResult
+      })
+      setUserProfile(profile)
+    } catch (err) {
+      console.error('Error fetching user profile:', err)
+      setError('Failed to load profile data')
+      // If it's a 401 error, redirect to auth
+      if (err instanceof Error && (err.message.includes('401') || err.message.includes('Unauthorized'))) {
+        logout()
+        router.push('/auth')
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
 
   if (!hasHydrated || !user) {
     return (
@@ -49,6 +96,44 @@ export default function ProfileClient() {
     )
   }
 
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{
+            width: 36, height: 36, borderRadius: '50%',
+            border: '3px solid var(--color-border)', borderTopColor: 'var(--color-primary)',
+            animation: 'spin 0.8s linear infinite', margin: '0 auto 12px'
+          }} />
+          <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.85rem' }}>Loading profile data…</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div style={{ display: 'flex', flex: 1, alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+        <div style={{ textAlign: 'center' }}>
+          <p style={{ color: 'var(--color-danger)', fontSize: '0.9rem', marginBottom: '16px' }}>{error}</p>
+          <button 
+            onClick={fetchUserProfile}
+            style={{
+              padding: '8px 16px',
+              backgroundColor: 'var(--color-primary)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: '0.85rem'
+            }}
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   const handleLogout = () => {
     if (logout) logout()
     router.push('/auth')
@@ -60,7 +145,7 @@ export default function ProfileClient() {
     return                         { bg: 'var(--color-green-light)', color: '#16A34A', dot: '#22C55E' }
   }
 
-  const lc = lastCheckup ? riskStyle(lastCheckup.riskLevel) : null
+  const lc = userProfile?.lastCheckResult ? riskStyle(userProfile.lastCheckResult.riskLevel) : null
 
   return (
     <div className="profile-root">
@@ -68,15 +153,15 @@ export default function ProfileClient() {
       <HeroSection user={user} />
 
       {/* ── Floating Checkup Card ── */}
-      {lastCheckup && lc && <CheckupCard lastCheckup={lastCheckup} />}
+      {userProfile?.lastCheckResult && lc && <CheckupCard lastCheckup={userProfile.lastCheckResult} />}
 
       {/* ── Stats Row ── */}
-      <StatsRow checkupHistory={checkupHistory} user={user} />
+      <StatsRow checkupHistory={userProfile?.checkHistory || []} user={user} />
 
       {/* ── Accordions ── */}
       <div className="accordions-wrap">
         <ContactAccordion user={user} />
-        <HistoryAccordion checkupHistory={checkupHistory} />
+        <HistoryAccordion checkupHistory={userProfile?.checkHistory || []} />
       </div>
 
       {/* ── Actions ── */}

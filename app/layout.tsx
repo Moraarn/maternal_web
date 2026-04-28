@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
+import { Toaster } from "sonner";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -27,6 +28,7 @@ export default function RootLayout({
             <div className="min-h-screen-dvh flex items-center justify-center p-4">
               {children}
             </div>
+            <Toaster />
           </LanguageProvider>
         </ThemeProvider>
       </body>

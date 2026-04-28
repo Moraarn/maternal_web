@@ -4,7 +4,8 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Button from '@/components/ui/Button'
 import { useStore } from '@/store/useStore'
-import { login, LoginCredentials } from '@/app/auth/actions'
+import { signIn } from '@/app/auth/actions'
+import { showResponseToast } from 'next-api-bridge/form'
 
 interface LoginFormProps {
   onSwitchToSignup: () => void
@@ -15,33 +16,33 @@ export default function LoginForm({ onSwitchToSignup, onSuccess }: LoginFormProp
   const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const router = useRouter()
   const { setUser } = useStore()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
+    setError(null)
     
     try {
-      const credentials: LoginCredentials = { phone, password }
-      const data = await login(credentials)
+      const formData = new FormData()
+      formData.append('phone', phone)
+      formData.append('password', password)
+      formData.append('redirectPath', '/home')
       
-      console.log('Login successful, data:', data)
+      const result = await signIn(null, formData)
       
-      // Set user data in store
-      setUser(data.user)
-      
-      console.log('Calling onSuccess callback')
-      onSuccess()
-      
-      // Also try direct navigation as fallback
-      setTimeout(() => {
-        console.log('Attempting direct navigation to /home')
+      if (result.success && result.body) {
+        setUser(result.body)
+        onSuccess()
         router.push('/home')
-      }, 100)
+      } else {
+        setError(result.message || 'Login failed')
+        showResponseToast({ state: result })
+      }
     } catch (error) {
-      console.error('Login error:', error)
-      // TODO: Show error message to user
+      setError(error instanceof Error ? error.message : 'An unexpected error occurred')
     } finally {
       setIsLoading(false)
     }
@@ -60,6 +61,7 @@ export default function LoginForm({ onSwitchToSignup, onSuccess }: LoginFormProp
           placeholder="+254 7__ ___ ___"
           className="w-full px-4 py-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
           required
+          disabled={isLoading}
         />
       </div>
       
@@ -74,8 +76,13 @@ export default function LoginForm({ onSwitchToSignup, onSuccess }: LoginFormProp
           placeholder="Enter your password"
           className="w-full px-4 py-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
           required
+          disabled={isLoading}
         />
       </div>
+      
+      {error && (
+        <div className="text-red-500 text-sm">{error}</div>
+      )}
       
       <div className="text-right">
         <button
@@ -108,6 +115,7 @@ export default function LoginForm({ onSwitchToSignup, onSuccess }: LoginFormProp
         variant="outline"
         fullWidth
         onClick={onSwitchToSignup}
+        disabled={isLoading}
       >
         Create new account
       </Button>

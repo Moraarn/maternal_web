@@ -3,17 +3,20 @@
 import { useState } from 'react'
 import Button from '@/components/ui/Button'
 import { UserStatus, Trimester } from '@/store/useStore'
-import { register, RegisterData } from '@/app/auth/actions'
+import { signUp, RegisterData } from '@/app/auth/actions'
+import { showResponseToast } from 'next-api-bridge/form'
+import { useStore } from '@/store/useStore'
 
 interface SignupStepperProps {
   onSwitchToLogin: () => void
-  onSuccess: (data: RegisterData) => void
+  onSuccess: () => void
 }
 
 export default function SignupStepper({ onSwitchToLogin, onSuccess }: SignupStepperProps) {
   const [currentStep, setCurrentStep] = useState(1)
   const [isLoading, setIsLoading] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [formData, setFormData] = useState<RegisterData>({
     fullName: '',
     phone: '',
@@ -39,19 +42,65 @@ export default function SignupStepper({ onSwitchToLogin, onSuccess }: SignupStep
     
     setIsLoading(true)
     setIsSubmitted(true)
+    setError(null)
     
     try {
-      const data = await register(formData)
-      console.log('Registration successful:', data)
+      const formDataToSend = new FormData()
+      Object.entries(formData).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          formDataToSend.append(key, value.toString())
+        }
+      })
+      formDataToSend.append('redirectPath', '/home')
       
-      onSuccess(formData)
-      // Hard redirect immediately - don't wait for anything
-      window.location.href = '/home'
+      const result = await signUp(null, formDataToSend)
+      
+      // If we get here, it means the server action completed but didn't redirect
+      // This could happen if the redirect mechanism failed
+      console.log('Server action completed, performing client-side redirect')
+      
+      // Set user state if we have user data from the response
+      if (result && result.body) {
+        const { setUser } = useStore.getState()
+        setUser(result.body)
+        console.log('User set in store from registration response')
+      }
+      
+      onSuccess()
+      showResponseToast({ state: { success: true, message: 'Registration successful!', body: result?.body || null } })
+      
+      // Perform client-side redirect as fallback
+      setTimeout(() => {
+        console.log('Performing client-side redirect to /home')
+        window.location.href = '/home'
+      }, 1000)
+      
     } catch (error) {
       console.error('Registration error:', error)
+      
+      // Check if this is a redirect error (which means success)
+      if (error instanceof Error && (
+        error.message.includes('NEXT_REDIRECT') ||
+        error.message.includes('redirect') ||
+        error.message.includes('NEXT_REDIRECT')
+      )) {
+        // Registration was successful, server is redirecting
+        console.log('Server redirect detected, calling onSuccess')
+        onSuccess()
+        return // Don't set loading to false since we're redirecting
+      }
+      
+      // Check if this is an API error response
+      if (error && typeof error === 'object' && 'success' in error) {
+        const apiError = error as any
+        setError(apiError.message || 'Registration failed')
+        showResponseToast({ state: apiError })
+      } else {
+        setError(error instanceof Error ? error.message : 'An unexpected error occurred')
+      }
+      
       setIsLoading(false)
       setIsSubmitted(false)
-      // TODO: Show error message to user
     }
   }
 
@@ -322,6 +371,10 @@ export default function SignupStepper({ onSwitchToLogin, onSuccess }: SignupStep
       </div>
       
       {renderStep()}
+      
+      {error && (
+        <div className="text-red-500 text-sm mt-4">{error}</div>
+      )}
       
       <div className="flex gap-3 mt-6">
         {currentStep > 1 && (

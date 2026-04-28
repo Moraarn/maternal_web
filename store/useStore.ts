@@ -49,7 +49,10 @@ export const useStore = create<AppState>()(
       lastCheckup: null,
       checkupHistory: [],
 
-      setUser: (user) => set({ user }),
+      setUser: (user) => {
+        console.log('📝 [Store] Setting user:', { userId: user?.id, phone: user?.phone })
+        set({ user })
+      },
 
       setLastCheckup: (checkup) => set({ lastCheckup: checkup }),
 
@@ -57,15 +60,39 @@ export const useStore = create<AppState>()(
         checkupHistory: [entry, ...state.checkupHistory].slice(0, 10) // Keep last 10 entries
       })),
 
-      logout: () => set({ user: null, lastCheckup: null, checkupHistory: [] }),
+      logout: () => {
+        console.log('🚪 [Store] Logging out user')
+        set({ user: null, lastCheckup: null, checkupHistory: [] })
+      },
     }),
     {
       name: 'continuum-store',
-      partialize: (state) => ({
+      storage: typeof window !== 'undefined' 
+        ? {
+            getItem: (name) => {
+              const item = localStorage.getItem(name)
+              console.log('📖 [Store] Getting item:', name, !!item)
+              return item ? JSON.parse(item) : null
+            },
+            setItem: (name, value) => {
+              console.log('💾 [Store] Setting item:', name, { hasUser: !!(value as any)?.user })
+              localStorage.setItem(name, JSON.stringify(value))
+            },
+            removeItem: (name) => {
+              console.log('🗑️ [Store] Removing item:', name)
+              localStorage.removeItem(name)
+            },
+          }
+        : undefined, // Server-side storage
+      partialize: (state: AppState): Partial<AppState> => ({
         user: state.user,
         lastCheckup: state.lastCheckup,
         checkupHistory: state.checkupHistory,
       }),
+      onRehydrateStorage: () => (state) => {
+        console.log('🔄 [Store] Store rehydrated:', { hasUser: !!state?.user })
+        return state
+      },
     }
   )
 )
