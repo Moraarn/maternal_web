@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { Phone, Mic, MicOff, Volume2, VolumeX } from 'lucide-react'
 import AppShell from '@/components/ui/AppShell'
-import Button from '@/components/ui/Button'
 
 interface CallUIProps {
   onEndCall: () => void
@@ -37,7 +36,7 @@ export default function CallUI({
   useEffect(() => {
     if (isAIResponding || isUserListening) {
       const interval = setInterval(() => {
-        setWaveformBars(prev => 
+        setWaveformBars((prev: number[]) => 
           prev.map(() => Math.random() * 100)
         )
       }, 100)
@@ -54,7 +53,7 @@ export default function CallUI({
         rightContent: callDuration,
         color: isAIResponding ? 'primary' : 'primary'
       }}
-      showBottoBottomNav={false}
+      showBottomNav={false}
     >
       <div className="flex flex-col h-full px-4 py-6 space-y-6">
         {/* AI Avatar Section */}
@@ -111,7 +110,7 @@ export default function CallUI({
         {/* Waveform Visualization */}
         <div className="w-full max-w-sm mx-auto">
           <div className="flex items-center justify-center gap-1 h-12">
-            {(isAIResponding || isUserListening) ? waveformBars.map((height, index) => (
+            {(isAIResponding || isUserListening) ? waveformBars.map((height: number, index: number) => (
               <div
                 key={index}
                 className="w-1 rounded-full transition-all duration-100"
