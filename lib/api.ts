@@ -22,7 +22,7 @@ api.interceptors.request.use((config) => {
   })
   
   if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('continuum_token')
+    const token = localStorage.getItem('CystaNiva_token')
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
@@ -58,7 +58,7 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       // Clear token and redirect to auth
       if (typeof window !== 'undefined') {
-        localStorage.removeItem('continuum_token')
+        localStorage.removeItem('CystaNiva_token')
         window.location.href = '/auth'
       }
     }

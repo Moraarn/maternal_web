@@ -109,7 +109,7 @@ export default function ProfileClient() {
         </div>
       </div>
     )
-  }
+  }   
 
   if (error) {
     return (

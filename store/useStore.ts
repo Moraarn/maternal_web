@@ -66,7 +66,7 @@ export const useStore = create<AppState>()(
       },
     }),
     {
-      name: 'continuum-store',
+      name: 'CystaNiva-store',
       storage: typeof window !== 'undefined' 
         ? {
             getItem: (name) => {

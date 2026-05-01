@@ -1,0 +1,99 @@
+'use client'
+
+import { useState, useRef } from 'react'
+import { Send, Phone } from 'lucide-react'
+import MicButton from '@/components/talk/MicButton'
+
+interface ChatInputProps {
+  onSendMessage: (message: string) => void
+  onVoiceInput: () => void
+  onStartCall: () => void
+  isRecording: boolean
+  transcript: string
+}
+
+export default function ChatInput({ onSendMessage, onVoiceInput, onStartCall, isRecording, transcript }: ChatInputProps) {
+  const [inputText, setInputText] = useState('')
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      onSendMessage(inputText)
+      setInputText('')
+    }
+  }
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInputText(e.target.value)
+  }
+
+  const handleSendClick = () => {
+    onSendMessage(inputText)
+    setInputText('')
+  }
+
+  return (
+    <div 
+      className="border-t p-4"
+      style={{
+        borderColor: 'var(--color-border)',
+        backgroundColor: 'var(--color-background)'
+      }}
+    >
+      <div className="flex items-center gap-3">
+        <input
+          ref={inputRef}
+          type="text"
+          value={inputText}
+          onChange={handleInputChange}
+          onKeyPress={handleKeyPress}
+          placeholder="Type how you feel…"
+          className="flex-1 px-4 py-3 border rounded-2xl focus:outline-none focus:ring-2 focus:border-transparent text-sm"
+          style={{
+            borderColor: 'var(--color-border)',
+            backgroundColor: 'var(--color-surface)',
+            color: 'var(--color-text-primary)',
+            '--tw-ring-color': 'var(--color-primary)'
+          } as React.CSSProperties}
+          disabled={isRecording}
+        />
+        
+        <MicButton
+          isRecording={isRecording}
+          onClick={onVoiceInput}
+        />
+        
+        <button
+          onClick={handleSendClick}
+          disabled={!inputText.trim() || isRecording}
+          className="w-11 h-11 rounded-full flex items-center justify-center transition-all hover:opacity-90 disabled:opacity-40 disabled:pointer-events-none"
+          style={{
+            backgroundColor: 'var(--color-primary)',
+            color: 'white'
+          }}
+        >
+          <Send size={16} />
+        </button>
+
+        {/* Call Button */}
+        <button
+          onClick={onStartCall}
+          className="w-11 h-11 rounded-full flex items-center justify-center transition-all hover:opacity-90 shadow-lg"
+          style={{
+            backgroundColor: '#059669',
+            color: 'white'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = '#047857'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = '#059669'
+          }}
+        >
+          <Phone size={16} />
+        </button>
+      </div>
+    </div>
+  )
+}
