@@ -2,11 +2,15 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { MessageCircle } from 'lucide-react'
 import { useStore } from '@/store/useStore'
 import AppShell from '@/components/ui/AppShell'
 import QuestionProgress from './QuestionProgress'
-import QuestionScreen from './QuestionScreen'
+import QuestionCard from './QuestionCard'
+import AnswerButtons from './AnswerButtons'
+import VoiceInput from './VoiceInput'
 import ResultScreen from './ResultScreen'
+import Button from '@/components/ui/Button'
 import { 
   getQuestions, 
   createCheckSession, 
@@ -15,6 +19,27 @@ import {
   Question,
   CheckResult
 } from '@/app/check/actions'
+
+const translations = {
+  en: {
+    next: 'Next question →',
+    result: 'See my result →',
+    floatingLabel: 'Tell me how you feel',
+    switchTo: 'KI',
+    switchLabel: 'Kiswahili',
+    currentLabel: 'English',
+    currentCode: 'EN',
+  },
+  sw: {
+    next: 'Swali lijalo →',
+    result: 'Ona matokeo yangu →',
+    floatingLabel: 'Niambie unavyohisi',
+    switchTo: 'EN',
+    switchLabel: 'English',
+    currentLabel: 'Kiswahili',
+    currentCode: 'KI',
+  },
+}
 
 export default function CheckPageClient() {
   const router = useRouter()
@@ -30,6 +55,8 @@ export default function CheckPageClient() {
   const [questions, setQuestions] = useState<Question[]>([])
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [lang, setLang] = useState<'en' | 'sw'>('en')
+  const t = translations[lang]
 
   useEffect(() => {
     if (!user) {
@@ -272,6 +299,9 @@ export default function CheckPageClient() {
     window.location.href = 'tel:999'
   }
 
+  const handleTalkClick = () => router.push('/talk')
+  const toggleLanguage = () => setLang(prev => (prev === 'en' ? 'sw' : 'en'))
+
   if (!user || questions.length === 0) {
     return null
   }
@@ -295,18 +325,108 @@ export default function CheckPageClient() {
 
         <div className="flex-1 px-4 py-4">
           {!showResult ? (
-            <QuestionScreen
-              currentQuestion={currentQuestion}
-              currentQuestionIndex={currentQuestionIndex}
-              totalQuestions={questions.length}
-              selectedAnswer={selectedAnswer}
-              isRecording={isRecording}
-              transcript={transcript}
-              isLoading={isLoading}
-              onAnswerSelect={handleAnswerSelect}
-              onVoiceInput={handleVoiceInput}
-              onNext={handleNext}
-            />
+            <div className="space-y-4">
+              {/* Language Switcher */}
+              <div className="flex justify-end">
+                <button
+                  onClick={toggleLanguage}
+                  aria-label={`Switch to ${t.switchLabel}`}
+                  className="group relative flex items-center gap-0 rounded-full overflow-hidden transition-all duration-300"
+                  style={{
+                    border: '1.5px solid var(--color-primary)',
+                    height: '36px',
+                  }}
+                >
+                  {/* Active segment */}
+                  <span
+                    className="flex items-center gap-1.5 px-3 h-full text-sm font-semibold tracking-wide"
+                    style={{
+                      backgroundColor: 'var(--color-primary)',
+                      color: 'white',
+                      minWidth: '56px',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <span
+                      className="text-xs leading-none"
+                      style={{ opacity: 0.75 }}
+                    >
+                      {lang === 'en' ? '🇬🇧' : '🇰🇪'}
+                    </span>
+                    {t.currentCode}
+                  </span>
+
+                  {/* Divider */}
+                  <span
+                    className="w-px h-full"
+                    style={{ backgroundColor: 'var(--color-primary)' }}
+                  />
+
+                  {/* Inactive / switch-to segment */}
+                  <span
+                    className="flex items-center gap-1.5 px-3 h-full text-sm font-medium transition-colors duration-200"
+                    style={{
+                      color: 'var(--color-primary)',
+                      minWidth: '56px',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <span
+                      className="text-xs leading-none"
+                      style={{ opacity: 0.6 }}
+                    >
+                      {lang === 'en' ? '🇰🇪' : '🇬🇧'}
+                    </span>
+                    {t.switchTo}
+                  </span>
+                </button>
+              </div>
+
+              <QuestionCard
+                question={currentQuestion}
+                questionNumber={currentQuestionIndex + 1}
+                totalQuestions={questions.length}
+                language={lang}
+              />
+
+              {/* Answer Buttons */}
+              <AnswerButtons
+                selectedAnswer={selectedAnswer}
+                onAnswerSelect={handleAnswerSelect}
+              />
+
+              {/* Voice Input */}
+              <VoiceInput
+                isRecording={isRecording}
+                transcript={transcript}
+                onVoiceInput={handleVoiceInput}
+                language={lang}
+              />
+
+              {/* Next Button */}
+              <Button
+                onClick={handleNext}
+                disabled={selectedAnswer === null || isLoading}
+                fullWidth
+              >
+                {currentQuestionIndex < questions.length - 1 ? t.next : t.result}
+              </Button>
+
+              {/* Talk Button — inline, full width pill */}
+              <button
+                onClick={handleTalkClick}
+                className="w-full flex items-center justify-center gap-2.5 py-3 rounded-full transition-all duration-200 hover:opacity-90 active:scale-[0.98]"
+                style={{
+                  border: '1.5px solid var(--color-primary)',
+                  color: 'var(--color-primary)',
+                  backgroundColor: 'transparent',
+                }}
+                aria-label={t.floatingLabel}
+              >
+                <MessageCircle className="w-5 h-5" strokeWidth={1.75} />
+                <span className="text-sm font-medium">{t.floatingLabel}</span>
+              </button>
+            </div>
           ) : (
             <ResultScreen
               riskResult={riskResult}

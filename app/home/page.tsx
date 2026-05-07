@@ -6,12 +6,12 @@ import { useStore } from '@/store/useStore'
 import AppShell from '@/components/ui/AppShell'
 import QuestionCard from '@/components/check/QuestionCard'
 import RiskResultComponent from '@/components/check/RiskResult'
-import HospitalList from '@/components/check/HospitalList'
+import HospitalList from '@/components/check/HospitalListDebug'
 import Button from '@/components/ui/Button'
-import { getQuestions } from '@/lib/questions'
 import { calculateRisk, RiskResult } from '@/lib/riskEngine'
 import { Mic } from 'lucide-react'
 import { getCurrentUser } from '@/app/auth/actions'
+import { getQuestions, Question } from '@/app/check/actions'
 
 export default function HomePage() {
   const router = useRouter()
@@ -26,8 +26,21 @@ export default function HomePage() {
   const [riskResult, setRiskResult] = useState<RiskResult | null>(null)
   const [isRecording, setIsRecording] = useState(false)
   const [transcript, setTranscript] = useState('')
+  const [questions, setQuestions] = useState<Question[]>([])
 
-  const questions = user ? getQuestions(user.status, user.trimester) : []
+  useEffect(() => {
+    const loadQuestions = async () => {
+      if (user) {
+        try {
+          const fetchedQuestions = await getQuestions(user.status, user.trimester)
+          setQuestions(fetchedQuestions)
+        } catch (error) {
+          console.error('Failed to load questions:', error)
+        }
+      }
+    }
+    loadQuestions()
+  }, [user])
 
   useEffect(() => {
     // Simple hydration check - wait briefly for Zustand persist to load

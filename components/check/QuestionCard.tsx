@@ -1,12 +1,16 @@
-import { Question } from '@/lib/questions'
+import { Question } from '@/app/check/actions'
 
 interface QuestionCardProps {
   question: Question
   questionNumber: number
   totalQuestions: number
+  language?: 'en' | 'sw'
 }
 
-export default function QuestionCard({ question, questionNumber, totalQuestions }: QuestionCardProps) {
+export default function QuestionCard({ question, questionNumber, totalQuestions, language = 'en' }: QuestionCardProps) {
+  const displayText = language === 'sw' && question.text_sw ? question.text_sw : question.text
+  const displayHint = language === 'sw' && question.hint_sw ? question.hint_sw : question.hint
+
   return (
     <div 
       className="rounded-2xl p-4 space-y-3"
@@ -28,14 +32,14 @@ export default function QuestionCard({ question, questionNumber, totalQuestions 
         className="text-lg font-semibold leading-tight"
         style={{ color: 'var(--color-text-primary)' }}
       >
-        {question.text}
+        {displayText}
       </h3>
       
       <p 
         className="text-sm leading-relaxed"
         style={{ color: 'var(--color-text-secondary)' }}
       >
-        {question.hint}
+        {displayHint}
       </p>
     </div>
   )

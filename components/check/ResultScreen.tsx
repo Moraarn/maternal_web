@@ -1,6 +1,6 @@
 import { Mic } from 'lucide-react'
 import RiskResultComponent from './RiskResult'
-import HospitalList from './HospitalList'
+import HospitalList from './HospitalListDebug'
 import Button from '@/components/ui/Button'
 import { CheckResult } from '@/app/check/actions'
 

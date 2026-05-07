@@ -1,17 +1,15 @@
 import { useState, useCallback } from 'react'
 import { useStore } from '@/store/useStore'
-import { getQuestions } from '@/lib/questions'
 import { calculateRisk, RiskResult } from '@/lib/riskEngine'
+import { Question } from '@/app/check/actions'
 
-export function useCheckup() {
+export function useCheckup(questions: Question[]) {
   const { user, setLastCheckup, addToHistory } = useStore()
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
   const [answers, setAnswers] = useState<boolean[]>([])
   const [selectedAnswer, setSelectedAnswer] = useState<boolean | null>(null)
   const [isCompleted, setIsCompleted] = useState(false)
   const [result, setResult] = useState<RiskResult | null>(null)
-
-  const questions = user ? getQuestions(user.status, user.trimester) : []
 
   const resetCheckup = useCallback(() => {
     setCurrentQuestionIndex(0)

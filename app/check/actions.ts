@@ -2,13 +2,14 @@
 'use server'
 
 import { api } from '@/server/api'
-import { getQuestions as getLocalQuestions, Question as LocalQuestion } from '@/lib/questions'
 
 export interface Question {
   id: number
   tag: string
   text: string
   hint: string
+  text_sw: string
+  hint_sw: string
   userStatus: string
   trimester?: string
 }
@@ -46,7 +47,17 @@ export async function getQuestions(userStatus: string, trimester?: string): Prom
   console.log(' [Check Actions] getQuestions called with:', { userStatus, trimester })
   try {
     console.log(' [Check Actions] Calling backend API...')
-    const url = trimester ? `/check/questions/${userStatus}?trimester=${trimester}` : `/check/questions/${userStatus}`
+    
+    // Map trimester from words to numbers for backend compatibility
+    const trimesterMap: Record<string, string> = {
+      'first': '1',
+      'second': '2',
+      'third': '3',
+      'term': '3' // Map term to 3rd trimester
+    }
+    const mappedTrimester = trimester ? trimesterMap[trimester] || trimester : undefined
+    
+    const url = mappedTrimester ? `/check/questions/${userStatus}?trimester=${mappedTrimester}` : `/check/questions/${userStatus}`
     const response = await api.get(url)
     console.log(' [Check Actions] Backend response received:', {
       success: response.success,
@@ -65,30 +76,7 @@ export async function getQuestions(userStatus: string, trimester?: string): Prom
     return response.body
   } catch (error) {
     console.error(' [Check Actions] Error fetching questions from backend:', error)
-    console.log(' [Check Actions] Falling back to local questions...')
-    
-    // Fallback to local questions if backend fails
-    const localQuestions = getLocalQuestions(userStatus as any, trimester as any)
-    console.log(' [Check Actions] Using local questions:', {
-      count: localQuestions.length,
-      userStatus,
-      trimester,
-      questions: localQuestions.map(q => ({ id: q.id, text: q.text }))
-    })
-    
-    // Convert LocalQuestion to Question format (add userStatus field)
-    const convertedQuestions = localQuestions.map(q => ({
-      ...q,
-      userStatus: userStatus === 'postpartum_early' ? 'postpartum' : userStatus,
-      trimester
-    }))
-    
-    console.log(' [Check Actions] Converted local questions:', {
-      count: convertedQuestions.length,
-      sample: convertedQuestions[0]
-    })
-    
-    return convertedQuestions
+    throw new Error('Failed to fetch questions from backend. Please ensure the backend server is running.')
   }
 }
 
