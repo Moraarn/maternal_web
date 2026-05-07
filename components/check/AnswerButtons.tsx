@@ -1,12 +1,27 @@
 interface AnswerButtonsProps {
   selectedAnswer: boolean | null
   onAnswerSelect: (answer: boolean) => void
+  language?: 'en' | 'sw'
+}
+
+const translations = {
+  en: {
+    yes: 'Yes',
+    no: 'No'
+  },
+  sw: {
+    yes: 'Ndiyo',
+    no: 'Hapana'
+  }
 }
 
 export default function AnswerButtons({ 
   selectedAnswer, 
-  onAnswerSelect 
+  onAnswerSelect,
+  language = 'en'
 }: AnswerButtonsProps) {
+  const t = translations[language]
+
   return (
     <div className="space-y-3">
       <button
@@ -47,7 +62,7 @@ export default function AnswerButtons({
               : 'var(--color-text-primary)'
           }}
         >
-          Yes
+          {t.yes}
         </span>
       </button>
 
@@ -89,7 +104,7 @@ export default function AnswerButtons({
               : 'var(--color-text-primary)'
           }}
         >
-          No
+          {t.no}
         </span>
       </button>
     </div>

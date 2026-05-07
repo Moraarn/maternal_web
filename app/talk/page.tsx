@@ -1,4 +1,7 @@
+'use client'
+
 import TalkClient from '../../components/talk/TalkClient'
+import { useStore } from '@/store/useStore'
 
 interface Message {
   id: string
@@ -8,11 +11,14 @@ interface Message {
 }
 
 export default function TalkPage() {
-  // Initialize with empty data - client components will handle authentication and data fetching
+  const { language } = useStore()
+
   const initialMessages: Message[] = [
     {
       id: '1',
-      text: "Hello! I am the CystaNiva health assistant. Tell me how you are feeling today — you can speak or type in any language.",
+      text: language === 'sw'
+        ? "Habari! Mimi ni msaidizi wako wa afya wa CystaNiva. Niambie unajisikaje leo — unaweza kuongea au kuandika katika lugha yoyote."
+        : "Hello! I am the CystaNiva health assistant. Tell me how you are feeling today — you can speak or type in any language.",
       isUser: false,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }

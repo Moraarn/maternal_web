@@ -2,10 +2,12 @@
 
 import { usePathname, useRouter } from 'next/navigation'
 import { Home, Activity, MessageCircle, User } from 'lucide-react'
+import { useStore } from '@/store/useStore'
 
 interface NavTab {
   id: string
-  label: string
+  labelEn: string
+  labelSw: string
   icon: React.ReactNode
   path: string
 }
@@ -13,19 +15,22 @@ interface NavTab {
 const navTabs: NavTab[] = [
   {
     id: 'check',
-    label: 'Check',
+    labelEn: 'Check',
+    labelSw: 'Angalia',
     icon: <Activity size={20} />,
     path: '/check'
   },
   {
     id: 'talk',
-    label: 'Talk',
+    labelEn: 'Talk',
+    labelSw: 'Zungumza',
     icon: <MessageCircle size={20} />,
     path: '/talk'
   },
   {
     id: 'profile',
-    label: 'Profile',
+    labelEn: 'Profile',
+    labelSw: 'Wasifu',
     icon: <User size={20} />,
     path: '/profile'
   }
@@ -34,6 +39,7 @@ const navTabs: NavTab[] = [
 export default function BottomNav() {
   const pathname = usePathname()
   const router = useRouter()
+  const { language } = useStore()
   
   const handleTabClick = (tab: NavTab) => {
     router.push(tab.path)
@@ -43,6 +49,7 @@ export default function BottomNav() {
     <div className="bottom-nav">
       {navTabs.map((tab) => {
         const isActive = pathname === tab.path
+        const label = language === 'sw' ? tab.labelSw : tab.labelEn
         return (
           <button
             key={tab.id}
@@ -52,7 +59,7 @@ export default function BottomNav() {
             <div className={isActive ? 'text-primary' : 'text-text-secondary'}>
               {tab.icon}
             </div>
-            <span className="text-xs">{tab.label}</span>
+            <span className="text-xs">{label}</span>
           </button>
         )
       })}

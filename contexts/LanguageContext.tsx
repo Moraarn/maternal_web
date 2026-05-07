@@ -9,6 +9,10 @@ type TranslationKey =
   | 'profile.loading'
   | 'profile.edit'
   | 'profile.startCheckup'
+  | 'profile.account'
+  | 'profile.editProfile'
+  | 'profile.settings'
+  | 'profile.signOut'
   | 'profile.contactInfo'
   | 'profile.checkupHistory'
   | 'profile.phone'
@@ -42,6 +46,10 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     'profile.loading': 'Loading profile...',
     'profile.edit': 'Edit Profile',
     'profile.startCheckup': 'Start New Checkup',
+    'profile.account': 'Account',
+    'profile.editProfile': 'Edit Profile',
+    'profile.settings': 'Settings',
+    'profile.signOut': 'Sign Out',
     'profile.contactInfo': 'Contact Information',
     'profile.checkupHistory': 'Checkup History',
     'profile.phone': 'Phone',
@@ -68,6 +76,10 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     'profile.loading': 'Inapakia wasifu...',
     'profile.edit': 'Hariri Wasifu',
     'profile.startCheckup': 'Anza Ukaguzi Mpya',
+    'profile.account': 'Akaunti',
+    'profile.editProfile': 'Hariri Wasifu',
+    'profile.settings': 'Mipangilio',
+    'profile.signOut': 'Ondoka',
     'profile.contactInfo': 'Maelezo ya Mawasiliano',
     'profile.checkupHistory': 'Historia ya Ukaguzi',
     'profile.phone': 'Simu',
@@ -94,6 +106,10 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     'profile.loading': 'Chargement du profil...',
     'profile.edit': 'Modifier le Profil',
     'profile.startCheckup': 'Commencer un Nouveau Contrôle',
+    'profile.account': 'Compte',
+    'profile.editProfile': 'Modifier le Profil',
+    'profile.settings': 'Paramètres',
+    'profile.signOut': 'Se Déconnecter',
     'profile.contactInfo': 'Informations de Contact',
     'profile.checkupHistory': 'Historique des Contrôles',
     'profile.phone': 'Téléphone',

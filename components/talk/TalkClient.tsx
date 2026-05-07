@@ -11,6 +11,23 @@ import { useSpeechRecognition } from '@/hooks/useSpeechRecognition'
 import { useTextToSpeech } from '@/hooks/useTextToSpeech'
 import { getApiConfig, getAIResponse, handleCallConversation, type Message, type UserContext, type ConversationResponse } from '../../app/talk/actions'
 
+const translations = {
+  en: {
+    title: 'Talk to CystaNiva AI',
+    listening: 'Listening…',
+    error: "Sorry, I'm having trouble connecting. Please try again or contact your health worker if you need immediate help.",
+    fallback: "I'm having trouble connecting right now. Please try again or contact your health worker if you need immediate help.",
+    greeting: "Hello! I'm your CystaNiva health assistant. How are you feeling today? You can tell me about any symptoms or concerns you have."
+  },
+  sw: {
+    title: 'Zungumza na CystaNiva AI',
+    listening: 'Inasikiliza…',
+    error: "Samahani, nina shida ya kuunganisha. Tena jaribu au wasiliana na mhudumu wa afya ikiwa unahitaji msaada wa haraka.",
+    fallback: "Nina shida ya kuunganika sasa hivi. Tena jaribu au wasiliana na mhudumu wa afya ikiwa unahitaji msaada wa haraka.",
+    greeting: "Habari! Mimi ni msaidizi wako wa afya wa CystaNiva. Unajisikaje leo? Unaweza kuambia kuhusu dalili zozote au wasiwasi ulio nazo."
+  }
+}
+
 interface TalkClientProps {
   initialMessages: Message[]
   userContext: {
@@ -25,7 +42,8 @@ interface TalkClientProps {
 
 export default function TalkClient({ initialMessages, userContext, user }: TalkClientProps) {
   const router = useRouter()
-  const { user: storeUser, lastCheckup } = useStore()
+  const { user: storeUser, lastCheckup, language } = useStore()
+  const t = translations[language]
   
   // Check authentication
   useEffect(() => {
@@ -205,7 +223,7 @@ export default function TalkClient({ initialMessages, userContext, user }: TalkC
       // Show error message
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
-        text: "Sorry, I'm having trouble connecting. Please try again or contact your health worker if you need immediate help.",
+        text: t.error,
         isUser: false,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       }
@@ -310,7 +328,7 @@ export default function TalkClient({ initialMessages, userContext, user }: TalkC
       console.error('Error getting AI response:', error)
       
       // Fallback response
-      const fallbackResponse = "I'm having trouble connecting right now. Please try again or contact your health worker if you need immediate help."
+      const fallbackResponse = t.fallback
       
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -353,7 +371,7 @@ export default function TalkClient({ initialMessages, userContext, user }: TalkC
     setConversationTurn('ai')
     setIsAIResponding(true)
     
-    const greeting = "Hello! I'm your CystaNiva health assistant. How are you feeling today? You can tell me about any symptoms or concerns you have."
+    const greeting = t.greeting
     
     // Add greeting to messages
     const greetingMessage: Message = {
@@ -426,7 +444,7 @@ export default function TalkClient({ initialMessages, userContext, user }: TalkC
   return (
     <AppShell
       statusBar={{
-        title: 'Talk to CystaNiva AI'
+        title: t.title
       }}
     >
       <div className="flex flex-col h-full">
@@ -457,7 +475,7 @@ export default function TalkClient({ initialMessages, userContext, user }: TalkC
                 className="text-sm font-medium"
                 style={{ color: 'var(--color-primary)' }}
               >
-                Listening…
+                {t.listening}
               </span>
             </div>
           </div>

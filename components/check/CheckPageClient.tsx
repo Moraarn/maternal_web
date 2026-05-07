@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { MessageCircle } from 'lucide-react'
+import { MessageCircle, Palette } from 'lucide-react'
 import { useStore } from '@/store/useStore'
+import { useTheme } from '@/contexts/ThemeContext'
 import AppShell from '@/components/ui/AppShell'
 import QuestionProgress from './QuestionProgress'
 import QuestionCard from './QuestionCard'
@@ -22,6 +23,7 @@ import {
 
 const translations = {
   en: {
+    title: 'Symptom check',
     next: 'Next question →',
     result: 'See my result →',
     floatingLabel: 'Tell me how you feel',
@@ -31,6 +33,7 @@ const translations = {
     currentCode: 'EN',
   },
   sw: {
+    title: 'Uchunguzi wa dalili',
     next: 'Swali lijalo →',
     result: 'Ona matokeo yangu →',
     floatingLabel: 'Niambie unavyohisi',
@@ -41,9 +44,10 @@ const translations = {
   },
 }
 
-export default function CheckPageClient() {
+export default function  CheckPageClient() {
   const router = useRouter()
-  const { user, setLastCheckup, addToHistory } = useStore()
+  const { user, setLastCheckup, addToHistory, language, setLanguage } = useStore()
+  const { toggleTheme } = useTheme()
   
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
   const [answers, setAnswers] = useState<boolean[]>([])
@@ -55,8 +59,7 @@ export default function CheckPageClient() {
   const [questions, setQuestions] = useState<Question[]>([])
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-  const [lang, setLang] = useState<'en' | 'sw'>('en')
-  const t = translations[lang]
+  const t = translations[language]
 
   useEffect(() => {
     if (!user) {
@@ -300,7 +303,7 @@ export default function CheckPageClient() {
   }
 
   const handleTalkClick = () => router.push('/talk')
-  const toggleLanguage = () => setLang(prev => (prev === 'en' ? 'sw' : 'en'))
+  const toggleLanguage = () => setLanguage(language === 'en' ? 'sw' : 'en')
 
   if (!user || questions.length === 0) {
     return null
@@ -309,7 +312,7 @@ export default function CheckPageClient() {
   return (
     <AppShell
       statusBar={{
-        title: 'Symptom check',
+        title: t.title,
         showBack: true,
         rightContent: showResult ? '' : `Q${currentQuestionIndex + 1} of ${questions.length}`,
         color: getStatusBarColor()
@@ -326,8 +329,8 @@ export default function CheckPageClient() {
         <div className="flex-1 px-4 py-4">
           {!showResult ? (
             <div className="space-y-4">
-              {/* Language Switcher */}
-              <div className="flex justify-end">
+              {/* Language and Theme Switchers */}
+              <div className="flex justify-end gap-3">
                 <button
                   onClick={toggleLanguage}
                   aria-label={`Switch to ${t.switchLabel}`}
@@ -351,7 +354,7 @@ export default function CheckPageClient() {
                       className="text-xs leading-none"
                       style={{ opacity: 0.75 }}
                     >
-                      {lang === 'en' ? '🇬🇧' : '🇰🇪'}
+                      {language === 'en' ? '🇬🇧' : '🇰🇪'}
                     </span>
                     {t.currentCode}
                   </span>
@@ -375,10 +378,24 @@ export default function CheckPageClient() {
                       className="text-xs leading-none"
                       style={{ opacity: 0.6 }}
                     >
-                      {lang === 'en' ? '🇰🇪' : '🇬🇧'}
+                      {language === 'en' ? '🇰🇪' : '🇬🇧'}
                     </span>
                     {t.switchTo}
                   </span>
+                </button>
+
+                <button
+                  onClick={toggleTheme}
+                  className="flex items-center justify-center rounded-full transition-all duration-200 hover:opacity-80 active:scale-95"
+                  style={{
+                    border: '1.5px solid var(--color-border)',
+                    backgroundColor: 'var(--color-surface)',
+                    width: '36px',
+                    height: '36px',
+                  }}
+                  aria-label="Toggle theme"
+                >
+                  <Palette className="w-5 h-5" strokeWidth={1.75} style={{ color: 'var(--color-text-secondary)' }} />
                 </button>
               </div>
 
@@ -386,13 +403,14 @@ export default function CheckPageClient() {
                 question={currentQuestion}
                 questionNumber={currentQuestionIndex + 1}
                 totalQuestions={questions.length}
-                language={lang}
+                language={language}
               />
 
               {/* Answer Buttons */}
               <AnswerButtons
                 selectedAnswer={selectedAnswer}
                 onAnswerSelect={handleAnswerSelect}
+                language={language}
               />
 
               {/* Voice Input */}
@@ -400,7 +418,7 @@ export default function CheckPageClient() {
                 isRecording={isRecording}
                 transcript={transcript}
                 onVoiceInput={handleVoiceInput}
-                language={lang}
+                language={language}
               />
 
               {/* Next Button */}

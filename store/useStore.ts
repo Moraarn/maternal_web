@@ -35,11 +35,13 @@ interface AppState {
   user: User | null
   lastCheckup: LastCheckup | null
   checkupHistory: CheckupHistoryEntry[]
+  language: 'en' | 'sw'
   
   setUser: (user: User | null) => void
   setLastCheckup: (checkup: LastCheckup | null) => void
   addToHistory: (entry: CheckupHistoryEntry) => void
   logout: () => void
+  setLanguage: (language: 'en' | 'sw') => void
 }
 
 export const useStore = create<AppState>()(
@@ -48,6 +50,7 @@ export const useStore = create<AppState>()(
       user: null,
       lastCheckup: null,
       checkupHistory: [],
+      language: 'en',
 
       setUser: (user) => {
         console.log('📝 [Store] Setting user:', { userId: user?.id, phone: user?.phone })
@@ -59,6 +62,11 @@ export const useStore = create<AppState>()(
       addToHistory: (entry) => set((state) => ({
         checkupHistory: [entry, ...state.checkupHistory].slice(0, 10) // Keep last 10 entries
       })),
+
+      setLanguage: (language) => {
+        console.log('🌐 [Store] Setting language:', language)
+        set({ language })
+      },
 
       logout: () => {
         console.log('🚪 [Store] Logging out user')
@@ -88,9 +96,10 @@ export const useStore = create<AppState>()(
         user: state.user,
         lastCheckup: state.lastCheckup,
         checkupHistory: state.checkupHistory,
+        language: state.language,
       }),
       onRehydrateStorage: () => (state) => {
-        console.log('🔄 [Store] Store rehydrated:', { hasUser: !!state?.user })
+        console.log('🔄 [Store] Store rehydrated:', { hasUser: !!state?.user, language: state?.language })
         return state
       },
     }

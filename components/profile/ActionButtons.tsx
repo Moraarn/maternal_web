@@ -4,6 +4,10 @@ import { User, Settings, LogOut, Sparkles } from 'lucide-react'
 
 type TranslationKey = 
   | 'profile.startCheckup'
+  | 'profile.account'
+  | 'profile.editProfile'
+  | 'profile.settings'
+  | 'profile.signOut'
 
 interface ActionButtonsProps {
   onStartCheckup: () => void
@@ -99,24 +103,24 @@ export default function ActionButtons({ onStartCheckup, onEditProfile, onSetting
 
         <div className="divider">
           <div className="divider-line" />
-          <span className="divider-text">Account</span>
+          <span className="divider-text">{t('profile.account')}</span>
           <div className="divider-line" />
         </div>
 
         <div className="btn-row">
           <button className="btn-sec" onClick={onEditProfile}>
             <User size={15} />
-            Edit Profile
+            {t('profile.editProfile')}
           </button>
           <button className="btn-sec" onClick={onSettings}>
             <Settings size={15} />
-            Settings
+            {t('profile.settings')}
           </button>
         </div>
 
         <button className="btn-logout" onClick={onLogout}>
           <LogOut size={16} />
-          Sign Out
+          {t('profile.signOut')}
         </button>
       </div>
     </>
