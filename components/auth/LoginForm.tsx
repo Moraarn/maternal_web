@@ -3,9 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Button from '@/components/ui/Button'
-import { useStore } from '@/store/useStore'
-import { signIn } from '@/app/auth/actions'
-import { showResponseToast } from 'next-api-bridge/form'
+import { useAuth } from '@/hooks/useAuth'
 
 interface LoginFormProps {
   onSwitchToSignup: () => void
@@ -15,36 +13,22 @@ interface LoginFormProps {
 export default function LoginForm({ onSwitchToSignup, onSuccess }: LoginFormProps) {
   const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
-  const { setUser } = useStore()
+  const { login, isLoading: authLoading, error: authError, clearError } = useAuth()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setIsLoading(true)
     setError(null)
-    
-    try {
-      const formData = new FormData()
-      formData.append('phone', phone)
-      formData.append('password', password)
-      formData.append('redirectPath', '/home')
-      
-      const result = await signIn(null, formData)
-      
-      if (result.success && result.body) {
-        setUser(result.body)
-        onSuccess()
-        router.push('/home')
-      } else {
-        setError(result.message || 'Login failed')
-        showResponseToast({ state: result })
-      }
-    } catch (error) {
-      setError(error instanceof Error ? error.message : 'An unexpected error occurred')
-    } finally {
-      setIsLoading(false)
+    clearError()
+
+    const result = await login({ phone, password })
+
+    if (result.success) {
+      onSuccess()
+      router.push('/home')
+    } else {
+      setError(result.error || 'Login failed')
     }
   }
 
@@ -61,7 +45,7 @@ export default function LoginForm({ onSwitchToSignup, onSuccess }: LoginFormProp
           placeholder="+254 7__ ___ ___"
           className="w-full px-4 py-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
           required
-          disabled={isLoading}
+          disabled={authLoading}
         />
       </div>
       
@@ -76,7 +60,7 @@ export default function LoginForm({ onSwitchToSignup, onSuccess }: LoginFormProp
           placeholder="Enter your password"
           className="w-full px-4 py-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
           required
-          disabled={isLoading}
+          disabled={authLoading}
         />
       </div>
       
@@ -96,11 +80,11 @@ export default function LoginForm({ onSwitchToSignup, onSuccess }: LoginFormProp
       <Button
         type="submit"
         fullWidth
-        disabled={isLoading || !phone.trim() || !password.trim()}
+        disabled={authLoading || !phone.trim() || !password.trim()}
       >
-        {isLoading ? 'Signing in...' : 'Sign in'}
+        {authLoading ? 'Signing in...' : 'Sign in'}
       </Button>
-      
+
       <div className="relative">
         <div className="absolute inset-0 flex items-center">
           <div className="w-full border-t border-border"></div>
@@ -109,13 +93,13 @@ export default function LoginForm({ onSwitchToSignup, onSuccess }: LoginFormProp
           <span className="px-2 bg-white text-text-secondary">or</span>
         </div>
       </div>
-      
+
       <Button
         type="button"
         variant="outline"
         fullWidth
         onClick={onSwitchToSignup}
-        disabled={isLoading}
+        disabled={authLoading}
       >
         Create new account
       </Button>

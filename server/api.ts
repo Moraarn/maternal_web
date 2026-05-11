@@ -4,7 +4,7 @@ export const api = createNextApiBridge({
   baseUrl: process.env.API_URL || 'http://localhost:5000',
   auth: {
     type: 'bearer',
-    tokenCookie: 'CystaNiva_token',
+    tokenCookie: 'access_token',
     header: 'Authorization',
     prefix: 'Bearer',
   },

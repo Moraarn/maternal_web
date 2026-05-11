@@ -3,16 +3,16 @@
 import { useState, useEffect } from 'react'
 import Button from '@/components/ui/Button'
 import Modal from '@/components/ui/Modal'
-import { useStore } from '@/store/useStore'
 import { UserStatus, Trimester } from '@/store/useStore'
 
 interface EditProfileModalProps {
   isOpen: boolean
   onClose: () => void
+  user: any
+  onSave: (updatedUser: any) => Promise<void>
 }
 
-export default function EditProfileModal({ isOpen, onClose }: EditProfileModalProps) {
-  const { user, setUser } = useStore()
+export default function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileModalProps) {
   const [formData, setFormData] = useState({
     fullName: '',
     phone: '',
@@ -50,23 +50,14 @@ export default function EditProfileModal({ isOpen, onClose }: EditProfileModalPr
     if (!user) return
 
     setIsLoading(true)
-    
+
     try {
-      // Update user in store
       const updatedUser = {
         ...user,
         ...formData
       }
-      
-      setUser(updatedUser)
-      
-      // TODO: Save to backend API
-      // await fetch('/api/user/profile', {
-      //   method: 'PUT',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(formData)
-      // })
-      
+
+      await onSave(updatedUser)
       onClose()
     } catch (error) {
       console.error('Failed to update profile:', error)

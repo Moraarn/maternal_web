@@ -1,7 +1,7 @@
 'use server';
 
 import { redirect } from 'next/navigation';
-import { api } from '@/server/api';
+import { cookies } from 'next/headers';
 import { getCleanFormData, validateRedirectPath } from 'next-api-bridge/form';
 import { UserStatus, Trimester } from '@/store/useStore';
 
@@ -49,25 +49,83 @@ export interface ApiBridgeResponse<T = any> {
 }
 
 export async function signIn(_prev: unknown, data: FormData) {
+  const redirectPath = data.get('redirectPath') as string;
   const body = getCleanFormData(data, { delete: ['redirectPath'] });
-  const response = await api.post('/auth/login', body);
 
-  if (response.success) {
-    redirect(validateRedirectPath(data.get('redirectPath') as string));
+  const API_URL = process.env.API_URL || 'http://localhost:5000';
+  const res = await fetch(`${API_URL}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+    credentials: 'include',
+  });
+
+  if (!res.ok) {
+    const errorText = await res.text();
+    return { success: false, message: errorText || 'Login failed', body: null, formdata: body, redirectPath } as ApiBridgeResponse<AuthResponse['user']>;
   }
 
-  return { formdata: body, ...response } as ApiBridgeResponse<AuthResponse['user']>;
+  const result = await res.json();
+
+  // Forward cookies from backend to browser
+  const setCookieHeader = res.headers.get('set-cookie');
+  if (setCookieHeader) {
+    const cookieStore = await cookies();
+    setCookieHeader.split(',').forEach((cookie) => {
+      const [cookiePart] = cookie.trim().split(';');
+      const [name, value] = cookiePart.split('=');
+      if (name && value) {
+        cookieStore.set(name.trim(), value.trim(), {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          maxAge: 15 * 60, // 15 minutes for access token
+        });
+      }
+    });
+  }
+
+  return { success: true, message: 'Login successful', body: result.user, formdata: body, redirectPath } as ApiBridgeResponse<AuthResponse['user']>;
 }
 
 export async function signUp(_prev: unknown, data: FormData) {
+  const redirectPath = data.get('redirectPath') as string;
   const body = getCleanFormData(data, { delete: ['redirectPath'] });
-  const response = await api.post('/auth/register', body);
 
-  if (response.success) {
-    redirect(validateRedirectPath(data.get('redirectPath') as string));
+  const API_URL = process.env.API_URL || 'http://localhost:5000';
+  const res = await fetch(`${API_URL}/auth/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+    credentials: 'include',
+  });
+
+  if (!res.ok) {
+    const errorText = await res.text();
+    return { success: false, message: errorText || 'Registration failed', body: null, formdata: body, redirectPath } as ApiBridgeResponse<AuthResponse['user']>;
   }
 
-  return { formdata: body, ...response } as ApiBridgeResponse<AuthResponse['user']>;
+  const result = await res.json();
+
+  // Forward cookies from backend to browser
+  const setCookieHeader = res.headers.get('set-cookie');
+  if (setCookieHeader) {
+    const cookieStore = await cookies();
+    setCookieHeader.split(',').forEach((cookie) => {
+      const [cookiePart] = cookie.trim().split(';');
+      const [name, value] = cookiePart.split('=');
+      if (name && value) {
+        cookieStore.set(name.trim(), value.trim(), {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          maxAge: 15 * 60, // 15 minutes for access token
+        });
+      }
+    });
+  }
+
+  return { success: true, message: 'Registration successful', body: result.user, formdata: body, redirectPath } as ApiBridgeResponse<AuthResponse['user']>;
 }
 
 // Legacy functions for components that haven't been migrated yet
@@ -120,21 +178,56 @@ export async function validateToken(): Promise<boolean> {
 }
 
 export async function signOut() {
-  const response = await api.post('/auth/logout');
-  return response;
+  const API_URL = process.env.API_URL || 'http://localhost:5000';
+  const res = await fetch(`${API_URL}/auth/logout`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+  });
+
+  const cookieStore = await cookies();
+  cookieStore.delete('access_token');
+  cookieStore.delete('refresh_token');
+
+  const result = await res.json();
+  return result;
 }
 
 export async function getCurrentUser() {
-  const response = await api.get('/auth/me');
-  return response;
+  const API_URL = process.env.API_URL || 'http://localhost:5000';
+  const res = await fetch(`${API_URL}/auth/me`, {
+    method: 'GET',
+    credentials: 'include',
+  });
+
+  if (!res.ok) {
+    return { success: false, message: 'Failed to fetch user', body: null };
+  }
+
+  const user = await res.json();
+  return { success: true, message: 'User fetched', body: user };
 }
 
 export async function createOtp(phoneNumber: string) {
-  const response = await api.post('/auth/otp/create', { phoneNumber });
-  return response;
+  const API_URL = process.env.API_URL || 'http://localhost:5000';
+  const res = await fetch(`${API_URL}/auth/otp/create`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ phoneNumber }),
+    credentials: 'include',
+  });
+
+  return await res.json();
 }
 
 export async function verifyOtp(phoneNumber: string, code: string) {
-  const response = await api.post('/auth/otp/verify', { phoneNumber, code });
-  return response;
+  const API_URL = process.env.API_URL || 'http://localhost:5000';
+  const res = await fetch(`${API_URL}/auth/otp/verify`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ phoneNumber, code }),
+    credentials: 'include',
+  });
+
+  return await res.json();
 }

@@ -78,7 +78,7 @@ export default function RiskResultComponent({ result }: RiskResultProps) {
       </div>
 
       {/* Symptom Tags */}
-      {result.symptomsDetected.length > 0 && result.riskLevel !== 'low' && (
+      {result.symptomsDetected && result.symptomsDetected.length > 0 && result.riskLevel !== 'low' && (
         <div>
           <h4 
             className="text-sm font-medium mb-2"

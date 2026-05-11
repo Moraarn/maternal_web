@@ -2,13 +2,13 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { useStore } from '@/store/useStore'
 import AppShell from '@/components/ui/AppShell'
 import MessageList from './MessageList'
 import ChatInput from './ChatInput'
 import CallUI from '@/components/talk/CallUI'
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition'
 import { useTextToSpeech } from '@/hooks/useTextToSpeech'
+import { fetchCurrentUser } from '@/lib/auth'
 import { getApiConfig, getAIResponse, handleCallConversation, type Message, type UserContext, type ConversationResponse } from '../../app/talk/actions'
 
 const translations = {
@@ -23,7 +23,7 @@ const translations = {
     title: 'Zungumza na CystaNiva AI',
     listening: 'Inasikiliza…',
     error: "Samahani, nina shida ya kuunganisha. Tena jaribu au wasiliana na mhudumu wa afya ikiwa unahitaji msaada wa haraka.",
-    fallback: "Nina shida ya kuunganika sasa hivi. Tena jaribu au wasiliana na mhudumu wa afya ikiwa unahitaji msaada wa haraka.",
+    fallback: "Nina shida ya kuunganika sasa hivi. Tena jaribu au wasiliana na mhudumu wa afya ikiwa unahitaki msaada wa haraka.",
     greeting: "Habari! Mimi ni msaidizi wako wa afya wa CystaNiva. Unajisikaje leo? Unaweza kuambia kuhusu dalili zozote au wasiwasi ulio nazo."
   }
 }
@@ -42,16 +42,25 @@ interface TalkClientProps {
 
 export default function TalkClient({ initialMessages, userContext, user }: TalkClientProps) {
   const router = useRouter()
-  const { user: storeUser, lastCheckup, language } = useStore()
+  const [currentUser, setCurrentUser] = useState<any>(user)
+  const [language] = useState<'en' | 'sw'>('en')
   const t = translations[language]
-  
-  // Check authentication
+
+  // Check authentication on mount
   useEffect(() => {
-    if (!storeUser) {
-      router.push('/auth')
-      return
+    const checkAuth = async () => {
+      if (currentUser) return
+
+      const user = await fetchCurrentUser()
+      if (!user) {
+        router.push('/auth')
+        return
+      }
+      setCurrentUser(user)
     }
-  }, [storeUser, router])
+
+    checkAuth()
+  }, [currentUser, router])
 
   const [messages, setMessages] = useState<Message[]>(initialMessages)
   const [isTyping, setIsTyping] = useState(false)
@@ -125,14 +134,14 @@ export default function TalkClient({ initialMessages, userContext, user }: TalkC
   }, [userTranscript, isInCall, conversationTurn, isAIResponding])
 
   const getUserContext = () => {
-    if (!storeUser) return userContext
+    if (!currentUser) return userContext
 
     return {
-      status: storeUser.status,
-      trimester: storeUser.trimester || 'first',
-      weeksCount: storeUser.weeksCount || 0,
-      lastRiskLevel: lastCheckup?.riskLevel,
-      lastSymptoms: lastCheckup?.symptomsDetected || [],
+      status: currentUser.status,
+      trimester: currentUser.trimester || 'first',
+      weeksCount: currentUser.weeksCount || 0,
+      lastRiskLevel: userContext.lastRiskLevel,
+      lastSymptoms: userContext.lastSymptoms || [],
     }
   }
 
@@ -286,11 +295,11 @@ export default function TalkClient({ initialMessages, userContext, user }: TalkC
     try {
       // Use conversation state machine for voice calls
       const conversationResponse: ConversationResponse = await handleCallConversation({
-        userId: storeUser?.id || 'anonymous',
+        userId: currentUser?.id || 'anonymous',
         message: userSpeech,
         userContext: getUserContext()
       })
-      
+
       // Add AI message with conversation context
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -299,11 +308,11 @@ export default function TalkClient({ initialMessages, userContext, user }: TalkC
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       }
       setMessages(prev => [...prev, aiMessage])
-      
+
       // Log risk level for monitoring
       if (conversationResponse.riskLevel === 'high' || conversationResponse.isEmergency) {
         console.warn(`High risk conversation detected: ${conversationResponse.riskLevel}`, {
-          userId: storeUser?.id,
+          userId: currentUser?.id,
           state: conversationResponse.state,
           message: userSpeech
         });

@@ -1,10 +1,13 @@
 import { useState, useCallback } from 'react'
-import { useStore } from '@/store/useStore'
 import { calculateRisk, RiskResult } from '@/lib/riskEngine'
 import { Question } from '@/app/check/actions'
+import type { UserStatus } from '@/store/useStore'
 
-export function useCheckup(questions: Question[]) {
-  const { user, setLastCheckup, addToHistory } = useStore()
+interface UseCheckupProps {
+  userStatus?: UserStatus
+}
+
+export function useCheckup(questions: Question[], { userStatus }: UseCheckupProps = {}) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
   const [answers, setAnswers] = useState<boolean[]>([])
   const [selectedAnswer, setSelectedAnswer] = useState<boolean | null>(null)
@@ -34,24 +37,13 @@ export function useCheckup(questions: Question[]) {
       setSelectedAnswer(null)
     } else {
       // Complete checkup
-      if (user) {
-        const riskResult = calculateRisk(newAnswers, user.status)
+      if (userStatus) {
+        const riskResult = calculateRisk(newAnswers, userStatus)
         setResult(riskResult)
         setIsCompleted(true)
-
-        // Save to store
-        const now = new Date().toISOString()
-        setLastCheckup({
-          ...riskResult,
-          date: now
-        })
-        addToHistory({
-          riskLevel: riskResult.riskLevel,
-          date: now
-        })
       }
     }
-  }, [selectedAnswer, answers, currentQuestionIndex, questions.length, user, setLastCheckup, addToHistory])
+  }, [selectedAnswer, answers, currentQuestionIndex, questions.length, userStatus])
 
   const previousQuestion = useCallback(() => {
     if (currentQuestionIndex > 0) {
@@ -78,13 +70,13 @@ export function useCheckup(questions: Question[]) {
     result,
     progress,
     isLastQuestion,
-    
+
     // Actions
     selectAnswer,
     nextQuestion,
     previousQuestion,
     resetCheckup,
-    
+
     // Computed
     canProceed: selectedAnswer !== null,
     hasStarted: answers.length > 0

@@ -30,6 +30,10 @@ export interface CheckResult {
   date: string
   questions: Question[]
   riskResults: RiskResult[]
+  smsAlertStatus?: {
+    chwSent: boolean
+    emergencySent: boolean
+  }
 }
 
 export interface CheckSession {
@@ -140,7 +144,7 @@ export async function completeCheckSession(
     })
     if (response.success && response.body) {
       console.log(' [Check Actions] Session completed successfully:', response.body)
-      return response.body as CheckResult
+      return (response.body as any).data as CheckResult
     }
     throw new Error(response.message || 'Failed to complete check session')
   } catch (error) {

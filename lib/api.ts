@@ -20,13 +20,13 @@ api.interceptors.request.use((config) => {
     fullUrl,
     params: config.params
   })
-  
-  if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('CystaNiva_token')
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`
-    }
+
+  // Restore token from localStorage if not already set
+  const token = localStorage.getItem('access_token')
+  if (token && !config.headers.Authorization) {
+    config.headers.Authorization = `Bearer ${token}`
   }
+
   return config
 })
 
@@ -42,7 +42,8 @@ api.interceptors.response.use(
       isArray: Array.isArray(response.data),
       dataLength: Array.isArray(response.data) ? response.data.length : 'N/A',
       isHtml: typeof response.data === 'string' && response.data.includes('<!DOCTYPE html'),
-      dataSample: typeof response.data === 'string' ? response.data.substring(0, 200) : response.data
+      dataSample: typeof response.data === 'string' ? response.data.substring(0, 200) : response.data,
+      setCookie: response.headers['set-cookie'],
     })
     return response
   },
@@ -56,9 +57,9 @@ api.interceptors.response.use(
     })
     
     if (error.response?.status === 401) {
-      // Clear token and redirect to auth
+      // Token is in HTTP-only cookie, let backend handle clearing it
+      // Redirect to auth page
       if (typeof window !== 'undefined') {
-        localStorage.removeItem('CystaNiva_token')
         window.location.href = '/auth'
       }
     }

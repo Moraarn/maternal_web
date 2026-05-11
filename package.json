@@ -11,6 +11,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.24.3",
     "axios": "^1.15.2",
+    "cookie-parser": "^1.4.7",
     "date-fns": "^4.1.0",
     "lucide-react": "^0.363.0",
     "next": "^14.2.35",
@@ -21,6 +22,7 @@
     "zustand": "^4.5.7"
   },
   "devDependencies": {
+    "@types/cookie-parser": "^1.4.10",
     "@types/node": "^20.19.39",
     "@types/react": "^18.3.28",
     "@types/react-dom": "^18.3.7",

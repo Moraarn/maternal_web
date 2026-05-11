@@ -1,18 +1,32 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Button from '@/components/ui/Button'
 import { UserStatus, Trimester } from '@/store/useStore'
-import { signUp, RegisterData } from '@/app/auth/actions'
-import { showResponseToast } from 'next-api-bridge/form'
-import { useStore } from '@/store/useStore'
+import { useAuth } from '@/hooks/useAuth'
 
 interface SignupStepperProps {
   onSwitchToLogin: () => void
   onSuccess: () => void
 }
 
+interface RegisterData {
+  fullName: string
+  phone: string
+  location: string
+  password: string
+  status: UserStatus
+  trimester?: Trimester
+  chwName?: string
+  chwPhone?: string
+  emergencyContactName?: string
+  emergencyContactPhone?: string
+}
+
 export default function SignupStepper({ onSwitchToLogin, onSuccess }: SignupStepperProps) {
+  const router = useRouter()
+  const { signup, isLoading: authLoading, error: authError, clearError } = useAuth()
   const [currentStep, setCurrentStep] = useState(1)
   const [isLoading, setIsLoading] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
@@ -43,62 +57,23 @@ export default function SignupStepper({ onSwitchToLogin, onSuccess }: SignupStep
     setIsLoading(true)
     setIsSubmitted(true)
     setError(null)
+    clearError()
     
     try {
-      const formDataToSend = new FormData()
-      Object.entries(formData).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
-          formDataToSend.append(key, value.toString())
-        }
-      })
-      formDataToSend.append('redirectPath', '/home')
+      const result = await signup(formData)
       
-      const result = await signUp(null, formDataToSend)
-      
-      // If we get here, it means the server action completed but didn't redirect
-      // This could happen if the redirect mechanism failed
-      console.log('Server action completed, performing client-side redirect')
-      
-      // Set user state if we have user data from the response
-      if (result && result.body) {
-        const { setUser } = useStore.getState()
-        setUser(result.body)
-        console.log('User set in store from registration response')
+      if (result.success) {
+        console.log('Registration successful, redirecting to home')
+        onSuccess()
+        router.push('/home')
+      } else {
+        setError(result.error || 'Registration failed')
+        setIsLoading(false)
+        setIsSubmitted(false)
       }
-      
-      onSuccess()
-      showResponseToast({ state: { success: true, message: 'Registration successful!', body: result?.body || null } })
-      
-      // Perform client-side redirect as fallback
-      setTimeout(() => {
-        console.log('Performing client-side redirect to /home')
-        window.location.href = '/home'
-      }, 1000)
-      
     } catch (error) {
       console.error('Registration error:', error)
-      
-      // Check if this is a redirect error (which means success)
-      if (error instanceof Error && (
-        error.message.includes('NEXT_REDIRECT') ||
-        error.message.includes('redirect') ||
-        error.message.includes('NEXT_REDIRECT')
-      )) {
-        // Registration was successful, server is redirecting
-        console.log('Server redirect detected, calling onSuccess')
-        onSuccess()
-        return // Don't set loading to false since we're redirecting
-      }
-      
-      // Check if this is an API error response
-      if (error && typeof error === 'object' && 'success' in error) {
-        const apiError = error as any
-        setError(apiError.message || 'Registration failed')
-        showResponseToast({ state: apiError })
-      } else {
-        setError(error instanceof Error ? error.message : 'An unexpected error occurred')
-      }
-      
+      setError(error instanceof Error ? error.message : 'An unexpected error occurred')
       setIsLoading(false)
       setIsSubmitted(false)
     }

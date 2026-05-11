@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { MessageCircle, Palette } from 'lucide-react'
-import { useStore } from '@/store/useStore'
 import { useTheme } from '@/contexts/ThemeContext'
 import AppShell from '@/components/ui/AppShell'
 import QuestionProgress from './QuestionProgress'
@@ -12,10 +11,12 @@ import AnswerButtons from './AnswerButtons'
 import VoiceInput from './VoiceInput'
 import ResultScreen from './ResultScreen'
 import Button from '@/components/ui/Button'
-import { 
-  getQuestions, 
-  createCheckSession, 
-  updateSessionAnswer, 
+import { fetchCurrentUser } from '@/lib/auth'
+import type { User } from '@/store/useStore'
+import {
+  getQuestions,
+  createCheckSession,
+  updateSessionAnswer,
   completeCheckSession,
   Question,
   CheckResult
@@ -44,11 +45,12 @@ const translations = {
   },
 }
 
-export default function  CheckPageClient() {
+export default function CheckPageClient() {
   const router = useRouter()
-  const { user, setLastCheckup, addToHistory, language, setLanguage } = useStore()
   const { toggleTheme } = useTheme()
-  
+
+  const [user, setUser] = useState<User | null>(null)
+  const [language, setLanguage] = useState<'en' | 'sw'>('en')
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
   const [answers, setAnswers] = useState<boolean[]>([])
   const [selectedAnswer, setSelectedAnswer] = useState<boolean | null>(null)
@@ -62,37 +64,41 @@ export default function  CheckPageClient() {
   const t = translations[language]
 
   useEffect(() => {
-    if (!user) {
-      router.push('/auth')
-      return
-    }
-    
-    // Load questions and create session when user is available
     const initializeCheck = async () => {
       try {
         setIsLoading(true)
-        console.log('User data:', { status: user.status, trimester: user.trimester, id: user.id })
-        const userQuestions = await getQuestions(user.status, user.trimester)
+        // Fetch user from backend
+        const currentUser = await fetchCurrentUser()
+
+        if (!currentUser || !currentUser.id || !currentUser.status) {
+          console.error('❌ [Check Page Client] No valid user found, redirecting to auth')
+          router.push('/auth')
+          return
+        }
+
+        setUser(currentUser)
+        console.log('User data:', { status: currentUser.status, trimester: currentUser.trimester, id: currentUser.id })
+
+        const userQuestions = await getQuestions(currentUser.status, currentUser.trimester)
         console.log('📋 [Check Page Client] Questions response received:', {
           responseType: typeof userQuestions,
           isArray: Array.isArray(userQuestions),
           value: userQuestions,
-          userStatus: user.status,
-          trimester: user.trimester
+          userStatus: currentUser.status,
+          trimester: currentUser.trimester
         })
-        
+
         // Ensure we have an array
         if (!Array.isArray(userQuestions)) {
           console.error('❌ [Check Page Client] Expected array but got:', typeof userQuestions, userQuestions)
-          // Fallback to empty array
           setQuestions([])
           return
         }
-        
+
         console.log('✅ [Check Page Client] Questions loaded:', {
           count: userQuestions.length,
-          userStatus: user.status,
-          trimester: user.trimester,
+          userStatus: currentUser.status,
+          trimester: currentUser.trimester,
           questions: userQuestions.map(q => ({
             id: q.id,
             text: q.text,
@@ -102,28 +108,27 @@ export default function  CheckPageClient() {
           }))
         })
         setQuestions(userQuestions)
-        
-        try {
-        const session = await createCheckSession(user.id)
+
+        const session = await createCheckSession(currentUser.id)
         const sessionId = (session.id || session._id) as string // Handle both id and _id from backend
-        console.log('✅ [Check Page Client] Session created:', { sessionId, userId: user.id })
+        console.log('✅ [Check Page Client] Session created:', { sessionId, userId: currentUser.id })
         setSessionId(sessionId)
-      } catch (sessionError) {
-        console.error('❌ [Check Page Client] Failed to create session:', sessionError)
-        console.log('🔄 [Check Page Client] Using fallback session...')
-        // Create a fallback session ID to allow proceeding without backend
-        const fallbackSessionId = `fallback_${user.id}_${Date.now()}`
-        setSessionId(fallbackSessionId)
-      }
-      } catch (error) {
-        console.error('Error initializing check:', error)
+      } catch (error: any) {
+        console.error('❌ [Check Page Client] Error initializing check:', error)
+        // If unauthorized, redirect to auth
+        if (error.message === 'Unauthorized' || error.message?.includes('401')) {
+          console.log('🔄 [Check Page Client] Unauthorized, redirecting to auth')
+          router.push('/auth')
+        } else {
+          throw error
+        }
       } finally {
         setIsLoading(false)
       }
     }
     
     initializeCheck()
-  }, [user, router])
+  }, [router])
 
   const currentQuestion = questions[currentQuestionIndex]
   
@@ -204,12 +209,7 @@ export default function  CheckPageClient() {
       
       console.log('💾 [Check Page Client] Updating session with answer...')
       // Update session with current answer
-      try {
-        await updateSessionAnswer(sessionId, currentQuestionIndex, selectedAnswer)
-      } catch (updateError) {
-        console.log('🔄 [Check Page Client] Session update failed, using fallback:', updateError)
-        // Continue without backend session update
-      }
+      await updateSessionAnswer(sessionId, currentQuestionIndex, selectedAnswer)
       
       const newAnswers = [...answers, selectedAnswer]
       setAnswers(newAnswers)
@@ -237,47 +237,9 @@ export default function  CheckPageClient() {
       } else {
         console.log('🏁 [Check Page Client] Completing session...')
         // Complete session and get results
-        let result: CheckResult
-        try {
-          result = await completeCheckSession(sessionId, user!.id, user!.status)
-          setRiskResult(result)
-          setShowResult(true)
-        } catch (completionError) {
-          console.log('🔄 [Check Page Client] Session completion failed, using fallback:', completionError)
-          // Create a fallback result
-          result = {
-            id: `fallback_${sessionId}`,
-            userId: user!.id,
-            answers: [...answers, selectedAnswer],
-            riskLevel: 'low',
-            riskFactors: [],
-            recommendations: ['Continue routine care'],
-            date: new Date().toISOString(),
-            questions: questions,
-            riskResults: []
-          }
-          console.log('📝 [Check Page Client] Using fallback result:', { 
-            sessionId, 
-            userId: user!.id, 
-            totalAnswers: result.answers.length,
-            riskLevel: result.riskLevel 
-          })
-          setRiskResult(result)
-          setShowResult(true)
-        }
-        
-        // Save to store (convert backend format to frontend format)
-        const now = new Date().toISOString()
-        setLastCheckup({
-          riskLevel: result.riskLevel as 'low' | 'medium' | 'high',
-          conditionChecked: 'Maternal health symptoms',
-          symptomsDetected: result.riskFactors,
-          date: now
-        })
-        addToHistory({
-          riskLevel: result.riskLevel as 'low' | 'medium' | 'high',
-          date: now
-        });
+        const result = await completeCheckSession(sessionId, user!.id, user!.status)
+        setRiskResult(result)
+        setShowResult(true)
       }
     } catch (error) {
       console.error('❌ [Check Page Client] Error in handleNext:', error)

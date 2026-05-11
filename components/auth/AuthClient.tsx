@@ -2,11 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useStore } from '@/store/useStore'
 import LoginForm from '@/components/auth/LoginForm'
 import SignupStepper from '@/components/auth/SignupStepper'
-import { UserStatus, Trimester, User } from '@/store/useStore'
-import { RegisterData, register } from '../../app/auth/actions'
+import { User } from '@/store/useStore'
+import { fetchCurrentUser } from '@/lib/auth'
 
 interface AuthClientProps {
   initialUser: User | null
@@ -15,77 +14,48 @@ interface AuthClientProps {
 export default function AuthClient({ initialUser }: AuthClientProps) {
   const [isLogin, setIsLogin] = useState(true)
   const [isNavigating, setIsNavigating] = useState(false)
-  const [hasHydrated, setHasHydrated] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
-  const { user, setUser } = useStore()
 
-  // Wait for Zustand store to hydrate
+  // Check authentication on mount by fetching from backend
   useEffect(() => {
-    const timer = setTimeout(() => setHasHydrated(true), 100)
-    return () => clearTimeout(timer)
-  }, [])
+    const checkAuth = async () => {
+      try {
+        // If server provided user, use it
+        if (initialUser && initialUser.id && initialUser.status) {
+          console.log('✅ [AuthClient] Using server-provided user, redirecting to home')
+          router.push('/home')
+          return
+        }
 
-  // Check for persisted user data after hydration
-  useEffect(() => {
-    if (!hasHydrated) return
+        // Otherwise fetch from backend
+        console.log('🔍 [AuthClient] Fetching current user from backend')
+        const user = await fetchCurrentUser()
 
-    console.log('🔍 [AuthClient] Checking authentication state:', {
-      hasHydrated,
-      initialUser: !!initialUser,
-      storeUser: !!user,
-    })
-
-    // Validate authentication using server-side check
-    const validateAndCheckAuth = async () => {
-      // Priority: 1. Server-provided user, 2. Store user, 3. No user (show auth)
-      if (initialUser) {
-        console.log('✅ [AuthClient] Using server-provided user, redirecting to home')
-        setUser(initialUser)
-        router.push('/home')
-      } else if (user) {
-        console.log('✅ [AuthClient] Using persisted store user, redirecting to home')
-        router.push('/home')
-      } else {
-        console.log('📝 [AuthClient] No user found, showing auth forms')
+        if (user && user.id && user.status) {
+          console.log('✅ [AuthClient] User authenticated, redirecting to home')
+          router.push('/home')
+        } else {
+          console.log('📝 [AuthClient] No authenticated user, showing auth forms')
+        }
+      } catch (error) {
+        console.error('❌ [AuthClient] Error checking authentication:', error)
+      } finally {
+        setIsLoading(false)
       }
     }
 
-    validateAndCheckAuth()
-  }, [hasHydrated, initialUser, user, router, setUser])
+    checkAuth()
+  }, [initialUser, router])
 
   const handleLoginSuccess = () => {
     console.log('Login successful, redirecting to home')
-    // Try multiple redirect methods
-    setTimeout(() => {
-      console.log('Attempting redirect to /home')
-      router.push('/home')
-    }, 50)
-    
-    // Fallback to window.location
-    setTimeout(() => {
-      console.log('Fallback redirect using window.location')
-      window.location.href = '/home'
-    }, 200)
+    router.push('/home')
   }
 
-  const handleSignupSuccess = async () => {
-    if (isNavigating) {
-      console.log('Already navigating, ignoring duplicate call')
-      return
-    }
-    
-    console.log('Backend registration successful, redirecting to home')
-    setIsNavigating(true)
-    
-    // Navigation is handled by the server action redirect
-    // This is just for cleanup and logging
-    try {
-      // The server action will handle the redirect to /home
-      console.log('Registration successful, waiting for server redirect')
-    } catch (error) {
-      console.error('Error during signup success handling:', error)
-      setIsNavigating(false)
-    }
+  const handleSignupSuccess = () => {
+    console.log('Registration successful, redirecting to home')
+    router.push('/home')
   }
 
   const switchToSignup = () => {
@@ -99,13 +69,13 @@ export default function AuthClient({ initialUser }: AuthClientProps) {
   }
 
   // Show loading state while checking authentication
-  if (initialUser !== null && initialUser !== undefined) {
+  if (isLoading) {
     return (
       <div className="phone-container bg-white">
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-text-secondary">Redirecting...</p>
+            <p className="text-text-secondary">Checking authentication...</p>
           </div>
         </div>
       </div>

@@ -1,8 +1,8 @@
 'use client'
 
+import { useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { Home, Activity, MessageCircle, User } from 'lucide-react'
-import { useStore } from '@/store/useStore'
 
 interface NavTab {
   id: string
@@ -39,12 +39,12 @@ const navTabs: NavTab[] = [
 export default function BottomNav() {
   const pathname = usePathname()
   const router = useRouter()
-  const { language } = useStore()
-  
+  const [language] = useState<'en' | 'sw'>('en')
+
   const handleTabClick = (tab: NavTab) => {
     router.push(tab.path)
   }
-  
+
   return (
     <div className="bottom-nav">
       {navTabs.map((tab) => {

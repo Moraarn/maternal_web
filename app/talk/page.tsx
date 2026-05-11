@@ -1,7 +1,7 @@
 'use client'
 
+import { useState } from 'react'
 import TalkClient from '../../components/talk/TalkClient'
-import { useStore } from '@/store/useStore'
 
 interface Message {
   id: string
@@ -11,7 +11,7 @@ interface Message {
 }
 
 export default function TalkPage() {
-  const { language } = useStore()
+  const [language] = useState<'en' | 'sw'>('en')
 
   const initialMessages: Message[] = [
     {
@@ -33,7 +33,7 @@ export default function TalkPage() {
   }
 
   return (
-    <TalkClient 
+    <TalkClient
       initialMessages={initialMessages}
       userContext={userContext}
       user={null}

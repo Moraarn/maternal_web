@@ -1,4 +1,4 @@
-import { Mic } from 'lucide-react'
+import { Mic, CheckCircle2, AlertCircle } from 'lucide-react'
 import RiskResultComponent from './RiskResult'
 import HospitalList from './HospitalListDebug'
 import Button from '@/components/ui/Button'
@@ -28,6 +28,49 @@ export default function ResultScreen({
             conditionChecked: 'Maternal health symptoms',
             symptomsDetected: riskResult.riskFactors
           }} />
+
+          {/* SMS Alert Status for High Risk */}
+          {riskResult.riskLevel === 'high' && riskResult.smsAlertStatus && (
+            <div
+              className="p-4 rounded-xl"
+              style={{
+                backgroundColor: 'var(--color-blue-light)',
+                border: '1px solid var(--color-blue-dark)'
+              }}
+            >
+              <div className="flex items-start gap-3">
+                <div style={{ color: 'var(--color-blue-dark)' }}>
+                  <CheckCircle2 size={20} />
+                </div>
+                <div className="flex-1">
+                  <h4
+                    className="font-semibold text-sm mb-2"
+                    style={{ color: 'var(--color-blue-dark)' }}
+                  >
+                    Alerts sent to your care team
+                  </h4>
+                  <div className="space-y-1 text-xs" style={{ color: 'var(--color-blue-dark)', opacity: 0.8 }}>
+                    <div className="flex items-center gap-2">
+                      {riskResult.smsAlertStatus.chwSent ? (
+                        <CheckCircle2 size={12} className="text-green-600" />
+                      ) : (
+                        <AlertCircle size={12} className="text-amber-600" />
+                      )}
+                      <span>Health Worker (CHW): {riskResult.smsAlertStatus.chwSent ? 'Sent' : 'Not sent'}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {riskResult.smsAlertStatus.emergencySent ? (
+                        <CheckCircle2 size={12} className="text-green-600" />
+                      ) : (
+                        <AlertCircle size={12} className="text-amber-600" />
+                      )}
+                      <span>Emergency Contact: {riskResult.smsAlertStatus.emergencySent ? 'Sent' : 'Not sent'}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* High Risk: Hospital List */}
           {riskResult.riskLevel === 'high' && (

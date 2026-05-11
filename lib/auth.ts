@@ -1,35 +1,26 @@
+import { clientApi } from '@/lib/clientApi'
+import type { User } from '@/store/useStore'
+
 export const getToken = (): string | null => {
-  if (typeof window !== 'undefined') {
-    // Check for cookie first (HTTP-only cookies set by backend)
-    const cookies = document.cookie.split(';');
-    const tokenCookie = cookies.find(cookie => cookie.trim().startsWith('CystaNiva_token='));
-    if (tokenCookie) {
-      return tokenCookie.split('=')[1];
-    }
-    // Fallback to localStorage for backward compatibility
-    return localStorage.getItem('CystaNiva_token');
-  }
-  // Server-side: return null (middleware will handle this differently)
+  // Token is stored in HTTP-only cookie by backend
+  // JavaScript cannot read HTTP-only cookies for security
+  // The browser automatically sends the cookie with requests when credentials: 'include'
+  // This function returns null as we rely on the backend to validate the cookie
   return null;
 }
 
-export const setToken = (token: string): void => {
-  if (typeof window !== 'undefined') {
-    // Keep localStorage for backward compatibility
-    localStorage.setItem('CystaNiva_token', token)
-    // Note: HTTP-only cookies are set by the backend, not client-side
-  }
-}
-
-export const clearToken = (): void => {
-  if (typeof window !== 'undefined') {
-    localStorage.removeItem('CystaNiva_token')
-    // Note: HTTP-only cookies are cleared by the backend logout endpoint
-    // Clear any non-HTTP-only cookies as fallback
-    document.cookie = 'CystaNiva_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
-  }
-}
-
 export const isAuthenticated = (): boolean => {
-  return !!getToken()
+  // We can't check authentication on the client side without making a request
+  // This function is deprecated - use fetchCurrentUser() instead
+  return false;
+}
+
+export const fetchCurrentUser = async (): Promise<User | null> => {
+  try {
+    const response = await clientApi.get('/auth/me')
+    return response as User
+  } catch (error) {
+    console.error('Failed to fetch current user:', error)
+    return null
+  }
 }

@@ -2,11 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useStore } from '@/store/useStore'
 import { useTheme } from '@/contexts/ThemeContext'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { getUserProfile, UserProfile } from '@/app/profile/actions'
-import { getCurrentUser } from '@/app/auth/actions'
+import { fetchCurrentUser } from '@/lib/auth'
 import HeroSection from '@/components/profile/HeroSection'
 import CheckupCard from '@/components/profile/CheckupCard'
 import StatsRow from '@/components/profile/StatsRow'
@@ -19,10 +18,9 @@ import SettingsModal from '@/components/profile/SettingsModal'
 
 export default function ProfileClient() {
   const router = useRouter()
-  const { user, logout } = useStore()
   const { theme } = useTheme()
   const { t } = useLanguage()
-  const [hasHydrated, setHasHydrated] = useState(false)
+  const [user, setUser] = useState<any>(null)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false)
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
@@ -31,57 +29,44 @@ export default function ProfileClient() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const timer = setTimeout(() => setHasHydrated(true), 100)
-    return () => clearTimeout(timer)
-  }, [])
+    const fetchUserAndProfile = async () => {
+      try {
+        setLoading(true)
+        setError(null)
 
-  useEffect(() => {
-    if (hasHydrated && !user) router.push('/auth')
-  }, [user, router, hasHydrated])
+        // Fetch user from backend
+        const currentUser = await fetchCurrentUser()
+        if (!currentUser) {
+          router.push('/auth')
+          return
+        }
+        setUser(currentUser)
 
-  useEffect(() => {
-    if (hasHydrated && user) {
-      fetchUserProfile()
-    }
-  }, [hasHydrated, user])
-
-  const fetchUserProfile = async () => {
-    try {
-      setLoading(true)
-      setError(null)
-      
-      // Validate authentication using getCurrentUser
-      const userResponse = await getCurrentUser()
-      if (!userResponse.success || !userResponse.body) {
-        console.log('🚫 [ProfileClient] Invalid authentication, redirecting to auth')
-        logout()
-        router.push('/auth')
-        return
+        const profile = await getUserProfile()
+        console.log('📊 [ProfileClient] Profile data received:', {
+          profile,
+          hasCheckHistory: !!profile.checkHistory,
+          checkHistoryLength: profile.checkHistory?.length || 0,
+          checkHistorySample: profile.checkHistory?.slice(0, 2),
+          hasLastCheckResult: !!profile.lastCheckResult
+        })
+        setUserProfile(profile)
+      } catch (err) {
+        console.error('Error fetching user profile:', err)
+        setError('Failed to load profile data')
+        // If it's a 401 error, redirect to auth
+        if (err instanceof Error && (err.message.includes('401') || err.message.includes('Unauthorized'))) {
+          router.push('/auth')
+        }
+      } finally {
+        setLoading(false)
       }
-      
-      const profile = await getUserProfile()
-      console.log('📊 [ProfileClient] Profile data received:', {
-        profile,
-        hasCheckHistory: !!profile.checkHistory,
-        checkHistoryLength: profile.checkHistory?.length || 0,
-        checkHistorySample: profile.checkHistory?.slice(0, 2),
-        hasLastCheckResult: !!profile.lastCheckResult
-      })
-      setUserProfile(profile)
-    } catch (err) {
-      console.error('Error fetching user profile:', err)
-      setError('Failed to load profile data')
-      // If it's a 401 error, redirect to auth
-      if (err instanceof Error && (err.message.includes('401') || err.message.includes('Unauthorized'))) {
-        logout()
-        router.push('/auth')
-      }
-    } finally {
-      setLoading(false)
     }
-  }
 
-  if (!hasHydrated || !user) {
+    fetchUserAndProfile()
+  }, [router])
+
+  if (loading) {
     return (
       <div style={{ display: 'flex', flex: 1, alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ textAlign: 'center' }}>
@@ -90,7 +75,7 @@ export default function ProfileClient() {
             border: '3px solid var(--color-border)', borderTopColor: 'var(--color-primary)',
             animation: 'spin 0.8s linear infinite', margin: '0 auto 12px'
           }} />
-          <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.85rem' }}>Loading profile…</p>
+          <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.85rem' }}>Loading profile data…</p>
         </div>
       </div>
     )
@@ -116,8 +101,8 @@ export default function ProfileClient() {
       <div style={{ display: 'flex', flex: 1, alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
         <div style={{ textAlign: 'center' }}>
           <p style={{ color: 'var(--color-danger)', fontSize: '0.9rem', marginBottom: '16px' }}>{error}</p>
-          <button 
-            onClick={fetchUserProfile}
+          <button
+            onClick={() => window.location.reload()}
             style={{
               padding: '8px 16px',
               backgroundColor: 'var(--color-primary)',
@@ -134,9 +119,19 @@ export default function ProfileClient() {
     )
   }
 
-  const handleLogout = () => {
-    if (logout) logout()
+  const handleLogout = async () => {
+    try {
+      await fetch('http://localhost:5000/auth/logout', { method: 'POST', credentials: 'include' })
+    } catch (error) {
+      console.error('Logout error:', error)
+    }
     router.push('/auth')
+  }
+
+  const handleSaveProfile = async (updatedUser: any) => {
+    // TODO: Save to backend API
+    console.log('Saving profile:', updatedUser)
+    setUser(updatedUser)
   }
 
   const riskStyle = (level: string) => {
@@ -180,7 +175,12 @@ export default function ProfileClient() {
         onCancel={() => setShowLogoutConfirm(false)}
       />
 
-      <EditProfileModal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} />
+      <EditProfileModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        user={user}
+        onSave={handleSaveProfile}
+      />
       <SettingsModal isOpen={isSettingsModalOpen} onClose={() => setIsSettingsModalOpen(false)} />
     </div>
   )
