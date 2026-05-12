@@ -125,7 +125,16 @@ export default function ProfileClient() {
     } catch (error) {
       console.error('Logout error:', error)
     }
-    router.push('/auth')
+
+    const expiredCookie = 'expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; SameSite=Lax'
+    document.cookie = `CystaNiva_token=; ${expiredCookie}`
+    document.cookie = `nab_CystaNiva_token=; ${expiredCookie}`
+    document.cookie = `access_token=; ${expiredCookie}`
+    document.cookie = `refresh_token=; ${expiredCookie}`
+    localStorage.removeItem('access_token')
+
+    router.replace('/auth')
+    router.refresh()
   }
 
   const handleSaveProfile = async (updatedUser: any) => {

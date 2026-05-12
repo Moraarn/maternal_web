@@ -71,18 +71,28 @@ export default function CheckPageClient() {
         const currentUser = await fetchCurrentUser()
 
         if (!currentUser || !currentUser.id || !currentUser.status) {
-          console.error('❌ [Check Page Client] No valid user found, redirecting to auth')
+          console.error('❌ [Check Page Client] No valid user found, redirecting to auth', { currentUser })
           router.push('/auth')
           return
         }
 
         setUser(currentUser)
-        console.log('User data:', { status: currentUser.status, trimester: currentUser.trimester, id: currentUser.id })
+        console.log('✅ [Check Page Client] User fetched:', { 
+          id: currentUser.id,
+          status: currentUser.status, 
+          trimester: currentUser.trimester 
+        })
 
+        console.log('📋 [Check Page Client] Fetching questions for:', { 
+          status: currentUser.status,
+          trimester: currentUser.trimester 
+        })
+        
         const userQuestions = await getQuestions(currentUser.status, currentUser.trimester)
         console.log('📋 [Check Page Client] Questions response received:', {
           responseType: typeof userQuestions,
           isArray: Array.isArray(userQuestions),
+          count: Array.isArray(userQuestions) ? userQuestions.length : 'N/A',
           value: userQuestions,
           userStatus: currentUser.status,
           trimester: currentUser.trimester
@@ -93,6 +103,10 @@ export default function CheckPageClient() {
           console.error('❌ [Check Page Client] Expected array but got:', typeof userQuestions, userQuestions)
           setQuestions([])
           return
+        }
+
+        if (userQuestions.length === 0) {
+          console.warn('⚠️ [Check Page Client] No questions found for user status:', currentUser.status)
         }
 
         console.log('✅ [Check Page Client] Questions loaded:', {
@@ -109,12 +123,16 @@ export default function CheckPageClient() {
         })
         setQuestions(userQuestions)
 
+        console.log('📝 [Check Page Client] Creating session for user:', currentUser.id)
         const session = await createCheckSession(currentUser.id)
         const sessionId = (session.id || session._id) as string // Handle both id and _id from backend
         console.log('✅ [Check Page Client] Session created:', { sessionId, userId: currentUser.id })
         setSessionId(sessionId)
       } catch (error: any) {
-        console.error('❌ [Check Page Client] Error initializing check:', error)
+        console.error('❌ [Check Page Client] Error initializing check:', {
+          message: error?.message,
+          error: error
+        })
         // If unauthorized, redirect to auth
         if (error.message === 'Unauthorized' || error.message?.includes('401')) {
           console.log('🔄 [Check Page Client] Unauthorized, redirecting to auth')

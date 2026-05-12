@@ -2,6 +2,7 @@
 'use server'
 
 import { api } from '@/server/api'
+import { cookies } from 'next/headers'
 
 export interface Question {
   id: number
@@ -52,6 +53,11 @@ export async function getQuestions(userStatus: string, trimester?: string): Prom
   try {
     console.log(' [Check Actions] Calling backend API...')
     
+    if (!userStatus) {
+      console.error(' [Check Actions] No userStatus provided')
+      return []
+    }
+    
     // Map trimester from words to numbers for backend compatibility
     const trimesterMap: Record<string, string> = {
       'first': '1',
@@ -62,31 +68,57 @@ export async function getQuestions(userStatus: string, trimester?: string): Prom
     const mappedTrimester = trimester ? trimesterMap[trimester] || trimester : undefined
     
     const url = mappedTrimester ? `/check/questions/${userStatus}?trimester=${mappedTrimester}` : `/check/questions/${userStatus}`
+    console.log(' [Check Actions] Request URL:', url)
     const response = await api.get(url)
     console.log(' [Check Actions] Backend response received:', {
       success: response.success,
+      message: response.message,
       dataType: typeof response.body,
       isArray: Array.isArray(response.body),
       dataLength: Array.isArray(response.body) ? response.body.length : 'N/A',
-      data: response.body
+      fullResponse: response
     })
     
-    // Ensure we return an array
-    if (!response.success || !Array.isArray(response.body)) {
-      console.error(' [Check Actions] Backend returned non-array:', typeof response.body, response.body)
-      throw new Error('Backend returned invalid data format')
+    // Handle both direct array response and wrapped response
+    let questionsData = response.body
+    if (response.success === false) {
+      console.error(' [Check Actions] Response indicates failure:', response)
+      return []
     }
     
-    return response.body
+    // If response.body is not an array, try response itself
+    if (!Array.isArray(questionsData) && Array.isArray(response)) {
+      questionsData = response
+    }
+    
+    // Ensure we return an array
+    if (!Array.isArray(questionsData)) {
+      console.warn(' [Check Actions] Backend returned non-array, returning empty:', typeof questionsData, questionsData)
+      return []
+    }
+    
+    console.log(' [Check Actions] Returning questions:', { count: questionsData.length })
+    return questionsData
   } catch (error) {
-    console.error(' [Check Actions] Error fetching questions from backend:', error)
-    throw new Error('Failed to fetch questions from backend. Please ensure the backend server is running.')
+    console.error(' [Check Actions] Error fetching questions from backend:', {
+      error: error instanceof Error ? error.message : String(error),
+      fullError: error
+    })
+    // Return empty array instead of throwing to allow graceful degradation
+    return []
   }
 }
 
 export async function createCheckSession(userId: string): Promise<CheckSession> {
   console.log(' [Check Actions] Creating session for user:', userId)
   try {
+    const cookieStore = await cookies()
+    const accessToken = cookieStore.get('access_token')?.value
+    console.log(' [Check Actions] Access token from cookies:', {
+      hasToken: !!accessToken,
+      tokenPreview: accessToken ? accessToken.substring(0, 20) + '...' : 'none'
+    })
+
     const response = await api.post('/check/session', { userId })
     console.log(' [Check Actions] Session creation response:', {
       success: response.success,

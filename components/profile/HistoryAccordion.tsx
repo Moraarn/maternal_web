@@ -32,7 +32,7 @@ function Accordion({
           {badge && badge}
         </div>
         <ChevronDown
-          size={16}
+          size={15}
           className="accordion-chevron"
           style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}
         />
@@ -51,79 +51,138 @@ export default function HistoryAccordion({ checkupHistory }: HistoryAccordionPro
   return (
     <>
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap');
+
         .accordion-card {
-          background: white;
+          font-family: 'DM Sans', sans-serif;
+          background: rgba(255,255,255,0.92);
+          backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
           border-radius: 18px;
           overflow: hidden;
-          box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-          border: 1px solid var(--color-border);
-          transition: box-shadow 0.2s;
+          border: 1px solid rgba(255,255,255,0.7);
+          box-shadow: 0 4px 6px rgba(0,0,0,0.04), 0 8px 20px rgba(0,0,0,0.06);
+          transition: box-shadow 0.25s cubic-bezier(0.22,1,0.36,1);
         }
         [data-theme="dark"] .accordion-card {
-          background: var(--color-surface);
-          box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+          background: rgba(30,32,40,0.88);
+          border-color: rgba(255,255,255,0.06);
+          box-shadow: 0 4px 6px rgba(0,0,0,0.2), 0 8px 20px rgba(0,0,0,0.3);
         }
-        .accordion-card.open { box-shadow: 0 4px 20px rgba(0,0,0,0.09); }
+        .accordion-card.open {
+          box-shadow: 0 4px 8px rgba(0,0,0,0.06), 0 16px 32px rgba(0,0,0,0.1);
+        }
+
         .accordion-trigger {
           width: 100%;
           display: flex; align-items: center; justify-content: space-between;
-          padding: 14px 16px;
-          background: none; border: none; cursor: pointer;
-          text-align: left;
+          padding: 13px 14px;
+          background: none; border: none; cursor: pointer; text-align: left;
+          transition: background 0.15s;
         }
-        .accordion-trigger:hover { background: var(--color-surface); }
+        .accordion-trigger:hover { background: rgba(0,0,0,0.02); }
+        [data-theme="dark"] .accordion-trigger:hover { background: rgba(255,255,255,0.03); }
+
         .accordion-trigger-left { display: flex; align-items: center; gap: 10px; }
+
         .accordion-icon {
           width: 34px; height: 34px; border-radius: 10px;
-          background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+          background: linear-gradient(140deg, var(--color-primary), var(--color-primary-dark));
+          display: flex; align-items: center; justify-content: center;
+          flex-shrink: 0;
+          box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+        }
+
+        .accordion-title {
+          font-size: 0.845rem; font-weight: 600;
+          color: var(--color-text-primary); letter-spacing: -0.01em;
+        }
+
+        .accordion-badge {
+          padding: 2px 8px; border-radius: 999px;
+          font-size: 0.63rem; font-weight: 700;
+          background: var(--color-surface); color: var(--color-text-secondary);
+          letter-spacing: 0.06em; text-transform: uppercase;
+        }
+
+        .accordion-chevron {
+          color: var(--color-text-secondary);
+          transition: transform 0.3s cubic-bezier(0.22,1,0.36,1);
+          flex-shrink: 0; opacity: 0.5;
+        }
+
+        .accordion-body {
+          overflow: hidden;
+          transition: max-height 0.35s cubic-bezier(0.22,1,0.36,1);
+        }
+        .accordion-inner { padding: 0 14px 14px; }
+
+        /* History items */
+        .h-item {
+          display: flex; align-items: center; justify-content: space-between;
+          padding: 9px 11px;
+          border-radius: 12px; margin-bottom: 6px;
+          background: rgba(0,0,0,0.02);
+          border: 1px solid var(--color-border);
+          cursor: pointer;
+          transition: background 0.15s, transform 0.2s cubic-bezier(0.22,1,0.36,1), box-shadow 0.2s;
+        }
+        [data-theme="dark"] .h-item { background: rgba(255,255,255,0.03); }
+        .h-item:last-child { margin-bottom: 0; }
+        .h-item:hover {
+          background: rgba(0,0,0,0.04);
+          transform: translateX(3px);
+          box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+
+        .h-item-left { display: flex; align-items: center; gap: 10px; }
+
+        .h-dot-wrap {
+          width: 30px; height: 30px; border-radius: 9px;
           display: flex; align-items: center; justify-content: center;
           flex-shrink: 0;
         }
-        .accordion-title {
-          font-size: 0.85rem; font-weight: 600;
-          color: var(--color-text-primary); letter-spacing: 0.01em;
-        }
-        .accordion-badge {
-          padding: 3px 8px; border-radius: 999px;
-          font-size: 0.65rem; font-weight: 700;
-          background: var(--color-surface); color: var(--color-text-secondary);
-          letter-spacing: 0.05em;
-        }
-        .accordion-chevron { color: var(--color-text-secondary); transition: transform 0.25s cubic-bezier(0.4,0,0.2,1); flex-shrink: 0; }
-        .accordion-body {
-          overflow: hidden;
-          transition: max-height 0.3s cubic-bezier(0.4,0,0.2,1);
-        }
-        .accordion-inner { padding: 0 16px 16px; }
 
-        .h-item {
-          display: flex; align-items: center; justify-content: space-between;
-          padding: 10px 12px;
-          border-radius: 12px; margin-bottom: 7px;
-          background: var(--color-surface);
-          cursor: pointer; transition: background 0.15s, transform 0.1s;
-          border: 1px solid var(--color-border);
+        .h-date {
+          font-size: 0.82rem; font-weight: 600;
+          color: var(--color-text-primary); letter-spacing: -0.01em;
+          line-height: 1.2;
         }
-        [data-theme="dark"] .h-item {
-          background: var(--color-surface);
-          border-color: var(--color-border);
+        .h-time {
+          font-size: 0.7rem; color: var(--color-text-secondary);
+          margin-top: 2px; opacity: 0.65;
         }
-        .h-item:last-child { margin-bottom: 0; }
-        .h-item:hover { background: var(--color-surface); transform: translateX(2px); }
-        .h-item-left { display: flex; align-items: center; gap: 10px; }
-        .h-date { font-size: 0.83rem; font-weight: 500; color: var(--color-text-primary); }
-        .h-time { font-size: 0.72rem; color: var(--color-text-secondary); }
+
         .risk-chip {
           display: flex; align-items: center; gap: 5px;
-          padding: 6px 12px; border-radius: 999px;
-          font-size: 0.7rem; font-weight: 700;
-          letter-spacing: 0.07em; text-transform: uppercase;
+          padding: 4px 9px; border-radius: 999px;
+          font-size: 0.65rem; font-weight: 700;
+          letter-spacing: 0.08em; text-transform: uppercase;
         }
-        .risk-dot { width: 6px; height: 6px; border-radius: 50%; }
+        .risk-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+
+        /* Empty state */
+        .h-empty {
+          display: flex; flex-direction: column; align-items: center;
+          padding: 1.5rem 0; gap: 8px;
+        }
+        .h-empty-icon {
+          width: 40px; height: 40px; border-radius: 50%;
+          background: rgba(0,0,0,0.03); border: 1px solid var(--color-border);
+          display: flex; align-items: center; justify-content: center;
+          margin-bottom: 2px;
+        }
+        .h-empty-title {
+          font-size: 0.82rem; font-weight: 600;
+          color: var(--color-text-secondary);
+        }
+        .h-empty-sub {
+          font-size: 0.72rem; color: var(--color-text-secondary); opacity: 0.6;
+        }
       `}</style>
 
       <Accordion
-        icon={<Activity size={16} color="white" />}
+        icon={<Activity size={15} color="white" strokeWidth={2.2} />}
         title="Checkup History"
         badge={
           checkupHistory.length > 0
@@ -138,40 +197,31 @@ export default function HistoryAccordion({ checkupHistory }: HistoryAccordionPro
             return (
               <div className="h-item" key={i}>
                 <div className="h-item-left">
-                  <div style={{
-                    width: 8, height: 8, borderRadius: '50%',
-                    background: cs.dot, flexShrink: 0
-                  }} />
+                  <div className="h-dot-wrap" style={{ background: cs.bg }}>
+                    <div style={{ width: 7, height: 7, borderRadius: '50%', background: cs.dot }} />
+                  </div>
                   <div>
                     <div className="h-date">{fmtDate(c.date)}</div>
                     <div className="h-time">{fmtTime(c.date)}</div>
                   </div>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <div className="risk-chip" style={{
-                    background: cs.bg, color: cs.color,
-                    padding: '4px 10px', fontSize: '0.67rem'
-                  }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                  <div className="risk-chip" style={{ background: cs.bg, color: cs.color }}>
                     <div className="risk-dot" style={{ background: cs.dot }} />
                     {c.riskLevel}
                   </div>
-                  <ChevronRight size={13} color="var(--color-text-secondary)" />
+                  <ChevronRight size={12} color="var(--color-text-secondary)" strokeWidth={2.5} style={{ opacity: 0.4 }} />
                 </div>
               </div>
             )
           })
         ) : (
-          <div style={{ textAlign: 'center', padding: '1.5rem 0' }}>
-            <div style={{
-              width: 44, height: 44, borderRadius: '50%',
-              background: 'var(--color-surface)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              margin: '0 auto 10px'
-            }}>
-              <Clock size={18} color="var(--color-text-secondary)" />
+          <div className="h-empty">
+            <div className="h-empty-icon">
+              <Clock size={16} color="var(--color-text-secondary)" strokeWidth={2} />
             </div>
-            <p style={{ fontSize: '0.83rem', color: 'var(--color-text-secondary)', fontWeight: 500, marginBottom: 3 }}>No checkups yet</p>
-            <p style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>Your history will appear here</p>
+            <div className="h-empty-title">No checkups yet</div>
+            <div className="h-empty-sub">Your history will appear here</div>
           </div>
         )}
       </Accordion>
