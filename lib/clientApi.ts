@@ -1,44 +1,72 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? ''
 
-const request = async (endpoint: string, options: RequestInit) => {
-  // Restore token from localStorage for Authorization header
-  const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
-  console.log('🔍 [clientApi] Request:', { endpoint, hasToken: !!token, tokenPreview: token ? token.substring(0, 20) + '...' : 'none' });
+if (!API_URL) {
+  throw new Error('NEXT_PUBLIC_API_URL is not defined')
+}
 
-  const response = await fetch(`${API_URL}${endpoint}`, {
-    credentials: 'include', // REQUIRED for HTTP-only cookies
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token && { Authorization: `Bearer ${token}` }),
-      ...options.headers,
-    },
-    ...options,
-  });
+const joinUrl = (base: string, path: string) => {
+  if (!base.endsWith('/') && !path.startsWith('/')) return `${base}/${path}`
+  if (base.endsWith('/') && path.startsWith('/')) return `${base}${path.slice(1)}`
+  return `${base}${path}`
+}
 
-  if (response.status === 401) {
-    // force logout flow if needed
-    throw new Error('Unauthorized');
+const request = async (endpoint: string, options: RequestInit = {}) => {
+  console.log(`🚀 REQUEST START: ${endpoint}`)
+
+  if (options.body) {
+    try {
+      console.log('📤 PAYLOAD:', JSON.parse(String(options.body)))
+    } catch {
+      console.log('📤 RAW PAYLOAD:', options.body)
+    }
   }
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(errorText || `HTTP error ${response.status}`);
-  }
+  try {
+    const response = await fetch(joinUrl(API_URL, endpoint), {
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+      ...options,
+    })
 
-  return response.json();
-};
+    console.log(`📥 RESPONSE STATUS: ${response.status}`)
+
+    const text = await response.text()
+    console.log('📥 RAW RESPONSE:', text)
+
+    let json: any = null
+
+    try {
+      json = text ? JSON.parse(text) : {}
+      console.log('✅ PARSED RESPONSE:', json)
+    } catch (parseError) {
+      console.error('❌ JSON PARSE ERROR:', parseError)
+      throw new Error('Server returned invalid JSON')
+    }
+
+    if (!response.ok) {
+      throw new Error(json?.message || `HTTP ${response.status}`)
+    }
+
+    return json
+  } catch (error) {
+    console.error(`❌ REQUEST FAILED: ${endpoint}`, error)
+    throw error
+  }
+}
 
 export const clientApi = {
-  get: (endpoint: string) =>
-    request(endpoint, { method: 'GET' }),
+  get: (endpoint: string) => request(endpoint, { method: 'GET' }),
 
-  post: (endpoint: string, data?: any) =>
+  post: (endpoint: string, data?: unknown) =>
     request(endpoint, {
       method: 'POST',
       body: JSON.stringify(data),
     }),
 
-  put: (endpoint: string, data?: any) =>
+  put: (endpoint: string, data?: unknown) =>
     request(endpoint, {
       method: 'PUT',
       body: JSON.stringify(data),
@@ -46,4 +74,4 @@ export const clientApi = {
 
   delete: (endpoint: string) =>
     request(endpoint, { method: 'DELETE' }),
-};
+}

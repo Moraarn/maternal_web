@@ -1,23 +1,12 @@
+'use client'
+
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import api from '@/lib/api'
+import { clientApi } from '@/lib/clientApi'
 
 interface LoginCredentials {
   phone: string
   password: string
-}
-
-interface SignupData {
-  fullName: string
-  phone: string
-  location: string
-  password: string
-  status: 'pregnant' | 'postpartum_early' | 'postpartum_late' | 'unknown'
-  trimester?: 'first' | 'second' | 'third' | 'term'
-  chwName?: string
-  chwPhone?: string
-  emergencyContactName?: string
-  emergencyContactPhone?: string
 }
 
 export function useAuth() {
@@ -26,74 +15,80 @@ export function useAuth() {
   const router = useRouter()
 
   const login = async (credentials: LoginCredentials) => {
+    console.log('🔐 LOGIN START')
     setIsLoading(true)
     setError(null)
 
     try {
-      const response = await api.post('/auth/login', credentials)
-      const { user, accessToken } = response.data
-      console.log('🔑 [useAuth] Login response:', { user, hasAccessToken: !!accessToken })
-      // Store token for fallback if cookies don't work
-      if (accessToken) {
-        localStorage.setItem('access_token', accessToken)
-        console.log('💾 [useAuth] Token stored in localStorage')
-        api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`
+      const response = await clientApi.post('/auth/login', credentials)
+
+      console.log('✅ LOGIN RESPONSE:', response)
+
+      const user = response.user
+      const token = response.accessToken
+
+      if (!user || !token) {
+        throw new Error('Invalid login response (missing user/token)')
       }
-      return { success: true, user }
+
+      // SINGLE SOURCE OF TRUTH (frontend session)
+      localStorage.setItem('currentUser', JSON.stringify(user))
+      localStorage.setItem('accessToken', token)
+
+      console.log('💾 SESSION STORED')
+
+      return {
+        success: true,
+        user,
+        token,
+      }
     } catch (err: any) {
-      const errorMessage = err.response?.data?.error || 'Login failed'
-      setError(errorMessage)
-      return { success: false, error: errorMessage }
+      console.error('❌ LOGIN ERROR:', err)
+      setError(err.message || 'Login failed')
+
+      return {
+        success: false,
+        error: err.message,
+      }
+    } finally {
+      setIsLoading(false)
+      console.log('🔐 LOGIN END')
+    }
+  }
+
+  const signup = async (data: any) => {
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      const response = await clientApi.post('/auth/register', data)
+
+      localStorage.setItem('currentUser', JSON.stringify(response.user))
+      if (response.accessToken) {
+        localStorage.setItem('accessToken', response.accessToken)
+      }
+
+      return { success: true, user: response.user }
+    } catch (err: any) {
+      setError(err.message || 'Signup failed')
+      return { success: false, error: err.message }
     } finally {
       setIsLoading(false)
     }
   }
 
-  const signup = async (data: SignupData) => {
-    setIsLoading(true)
-    setError(null)
-
-    try {
-      const response = await api.post('/auth/register', data)
-      const { user, accessToken } = response.data
-      console.log('🔑 [useAuth] Signup response:', { user, hasAccessToken: !!accessToken })
-      // Store token for fallback if cookies don't work
-      if (accessToken) {
-        localStorage.setItem('access_token', accessToken)
-        console.log('💾 [useAuth] Token stored in localStorage')
-        api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`
-      }
-      return { success: true, user }
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.error || 'Registration failed'
-      setError(errorMessage)
-      return { success: false, error: errorMessage }
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const logoutUser = async () => {
-    try {
-      // Call backend logout endpoint to clear HTTP-only cookie
-      await api.post('/auth/logout')
-    } catch (error) {
-      console.error('Logout error:', error)
-    } finally {
-      // Clear token from localStorage
-      localStorage.removeItem('access_token')
-      delete api.defaults.headers.common['Authorization']
-      // Redirect to auth page
-      router.push('/auth')
-    }
+  const logout = () => {
+    localStorage.removeItem('currentUser')
+    localStorage.removeItem('accessToken')
+    router.replace('/auth')
   }
 
   return {
     login,
     signup,
-    logout: logoutUser,
+    logout,
     isLoading,
     error,
-    clearError: () => setError(null)
+    clearError: () => setError(null),
   }
 }

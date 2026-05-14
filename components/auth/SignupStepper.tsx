@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import ProgressDots from './ProgressDots'
 import PersonalDetailsStep from './PersonalDetailsStep'
@@ -10,14 +9,18 @@ import CareTeamStep from './CareTeamStep'
 import FormNavigation from './FormNavigation'
 import { RegisterData, SignupStepperProps } from '../../lib/types'
 
-export default function SignupStepper({ onSwitchToLogin, onSuccess }: SignupStepperProps) {
-  const router = useRouter()
+export default function SignupStepper({
+  onSwitchToLogin,
+  onSuccess,
+}: SignupStepperProps) {
   const { signup, clearError } = useAuth()
+
   const [currentStep, setCurrentStep] = useState(1)
   const [isLoading, setIsLoading] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showMap, setShowMap] = useState(false)
+
   const [formData, setFormData] = useState<RegisterData>({
     fullName: '',
     phone: '',
@@ -51,16 +54,19 @@ export default function SignupStepper({ onSwitchToLogin, onSuccess }: SignupStep
 
     try {
       const result = await signup(formData)
+
       if (result.success) {
         onSuccess()
-        router.push('/home')
-      } else {
-        setError(result.error || 'Registration failed')
-        setIsLoading(false)
-        setIsSubmitted(false)
+        return
       }
+
+      setError(result.error || 'Registration failed')
+      setIsLoading(false)
+      setIsSubmitted(false)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An unexpected error occurred')
+      setError(
+        err instanceof Error ? err.message : 'An unexpected error occurred'
+      )
       setIsLoading(false)
       setIsSubmitted(false)
     }
@@ -68,12 +74,18 @@ export default function SignupStepper({ onSwitchToLogin, onSuccess }: SignupStep
 
   const nextStep = () => {
     if (isLoading || isSubmitted) return
-    if (currentStep < 3) setCurrentStep(currentStep + 1)
-    else handleSubmit()
+
+    if (currentStep < 3) {
+      setCurrentStep(currentStep + 1)
+    } else {
+      handleSubmit()
+    }
   }
 
   const prevStep = () => {
-    if (currentStep > 1) setCurrentStep(currentStep - 1)
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1)
+    }
   }
 
   const canProceed = () => {
@@ -85,13 +97,16 @@ export default function SignupStepper({ onSwitchToLogin, onSuccess }: SignupStep
           formData.location &&
           formData.password.length >= 6
         )
+
       case 2:
         return !!(
           formData.status !== 'unknown' &&
           (formData.status !== 'pregnant' || formData.trimester)
         )
+
       case 3:
         return !!formData.phone
+
       default:
         return false
     }
@@ -113,6 +128,7 @@ export default function SignupStepper({ onSwitchToLogin, onSuccess }: SignupStep
             geocoderRef={geocoderRef}
           />
         )
+
       case 2:
         return (
           <HealthStatusStep
@@ -120,6 +136,7 @@ export default function SignupStepper({ onSwitchToLogin, onSuccess }: SignupStep
             onUpdate={updateFormData}
           />
         )
+
       case 3:
         return (
           <CareTeamStep
@@ -127,6 +144,7 @@ export default function SignupStepper({ onSwitchToLogin, onSuccess }: SignupStep
             onUpdate={updateFormData}
           />
         )
+
       default:
         return null
     }
@@ -138,7 +156,11 @@ export default function SignupStepper({ onSwitchToLogin, onSuccess }: SignupStep
 
       {renderStep()}
 
-      {error && <div className="text-red-500 text-sm mt-4">{error}</div>}
+      {error && (
+        <div className="text-red-500 text-sm mt-4">
+          {error}
+        </div>
+      )}
 
       <FormNavigation
         currentStep={currentStep}

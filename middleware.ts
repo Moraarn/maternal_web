@@ -3,30 +3,37 @@ import type { NextRequest } from 'next/server'
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
-  
+
   // Public routes that don't require authentication
   const publicRoutes = ['/auth', '/api/auth/login', '/api/auth/register', '/api/auth/otp/create', '/api/auth/otp/verify']
-  
+
   // Check if the current path is public
-  const isPublicRoute = publicRoutes.some(route => 
+  const isPublicRoute = publicRoutes.some(route =>
     pathname === route || pathname.startsWith(route)
   )
-  
+
   // If it's a public route, allow access
   if (isPublicRoute) {
+    // If user is authenticated and trying to access /auth, redirect to home
+    const token = request.cookies.get('access_token')?.value
+    if (pathname === '/auth' && token) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/home'
+      return NextResponse.redirect(url)
+    }
     return NextResponse.next()
   }
-  
+
   // For protected routes, check for authentication via cookies
-  const token = request.cookies.get('nab_CystaNiva_token')?.value || request.cookies.get('CystaNiva_token')?.value
-  
+  const token = request.cookies.get('access_token')?.value
+
   if (!token) {
     // Redirect to auth page if not authenticated
     const url = request.nextUrl.clone()
     url.pathname = '/auth'
     return NextResponse.redirect(url)
   }
-  
+
   // Allow access to protected routes if authenticated
   return NextResponse.next()
 }
