@@ -159,76 +159,27 @@ export default function TalkClient({ initialMessages, userContext, user }: TalkC
     setIsTyping(true)
 
     try {
-      const { url, headers } = await getApiConfig()
-      
-      const response = await fetch(url, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          message: text.trim(),
-          history: messages.slice(-10),
-          userContext: getUserContext()
-        })
+      // Use server action instead of direct fetch
+      const responseText = await getAIResponse({
+        message: text.trim(),
+        history: messages.slice(-10),
+        userContext: getUserContext()
       })
 
-      if (!response.ok) {
-        throw new Error('Failed to send message')
-      }
-
       setIsTyping(false)
-      
+
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
-        text: '',
+        text: responseText,
         isUser: false,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       }
 
       setMessages(prev => [...prev, aiMessage])
-
-      // Handle streaming response
-      const reader = response.body?.getReader()
-      if (!reader) {
-        throw new Error('No response body')
-      }
-
-      const decoder = new TextDecoder()
-      let accumulatedText = ''
-
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-
-        const chunk = decoder.decode(value, { stream: true })
-        const lines = chunk.split('\n')
-
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6)
-            if (data === '[DONE]') continue
-            
-            try {
-              const parsed = JSON.parse(data)
-              if (parsed.content) {
-                accumulatedText += parsed.content
-                setMessages(prev => 
-                  prev.map(msg => 
-                    msg.id === aiMessage.id 
-                      ? { ...msg, text: accumulatedText }
-                      : msg
-                  )
-                )
-              }
-            } catch (e) {
-              // Ignore parsing errors
-            }
-          }
-        }
-      }
     } catch (error) {
       console.error('Error sending message:', error)
       setIsTyping(false)
-      
+
       // Show error message
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),

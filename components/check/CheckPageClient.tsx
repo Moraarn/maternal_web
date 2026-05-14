@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { MessageCircle, Palette } from 'lucide-react'
+import { MessageCircle, Palette, Languages } from 'lucide-react'
 import { useTheme } from '@/contexts/ThemeContext'
 import AppShell from '@/components/ui/AppShell'
 import QuestionProgress from './QuestionProgress'
@@ -144,6 +144,25 @@ export default function CheckPageClient() {
       }}
     >
       <div className="flex flex-col h-full">
+        <div className="flex justify-end gap-2 px-4 py-2">
+          <button
+            onClick={() => setLanguage(language === 'en' ? 'sw' : 'en')}
+            className="p-2 rounded-full"
+            style={{ backgroundColor: 'var(--color-surface)' }}
+            title="Switch language"
+          >
+            <Languages size={20} style={{ color: 'var(--color-text-primary)' }} />
+          </button>
+          <button
+            onClick={toggleTheme}
+            className="p-2 rounded-full"
+            style={{ backgroundColor: 'var(--color-surface)' }}
+            title="Toggle theme"
+          >
+            <Palette size={20} style={{ color: 'var(--color-text-primary)' }} />
+          </button>
+        </div>
+
         <QuestionProgress
           currentQuestionIndex={currentQuestionIndex}
           totalQuestions={questions.length}
