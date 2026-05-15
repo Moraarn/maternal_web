@@ -6,6 +6,7 @@ import { useTheme } from '@/contexts/ThemeContext'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { getUserProfile, UserProfile } from '@/app/profile/actions'
 import { fetchCurrentUser } from '@/lib/auth'
+import AppShell from '@/components/ui/AppShell'
 import HeroSection from '@/components/profile/HeroSection'
 import CheckupCard from '@/components/profile/CheckupCard'
 import StatsRow from '@/components/profile/StatsRow'
@@ -81,21 +82,6 @@ export default function ProfileClient() {
     )
   }
 
-  if (loading) {
-    return (
-      <div style={{ display: 'flex', flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{
-            width: 36, height: 36, borderRadius: '50%',
-            border: '3px solid var(--color-border)', borderTopColor: 'var(--color-primary)',
-            animation: 'spin 0.8s linear infinite', margin: '0 auto 12px'
-          }} />
-          <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.85rem' }}>Loading profile data…</p>
-        </div>
-      </div>
-    )
-  }   
-
   if (error) {
     return (
       <div style={{ display: 'flex', flex: 1, alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
@@ -152,30 +138,32 @@ export default function ProfileClient() {
   const lc = userProfile?.lastCheckResult ? riskStyle(userProfile.lastCheckResult.riskLevel) : null
 
   return (
-    <div className="profile-root">
-      {/* ── Hero ── */}
-      <HeroSection user={user} />
+    <>
+      <div className="flex flex-col h-full px-4 py-4 space-y-4">
+        {/* ── Hero ── */}
+        <HeroSection user={user} />
 
-      {/* ── Floating Checkup Card ── */}
-      {userProfile?.lastCheckResult && lc && <CheckupCard lastCheckup={userProfile.lastCheckResult} />}
+        {/* ── Floating Checkup Card ── */}
+        {userProfile?.lastCheckResult && lc && <CheckupCard lastCheckup={userProfile.lastCheckResult} />}
 
-      {/* ── Stats Row ── */}
-      <StatsRow checkupHistory={userProfile?.checkHistory || []} user={user} />
+        {/* ── Stats Row ── */}
+        <StatsRow checkupHistory={userProfile?.checkHistory || []} user={user} />
 
-      {/* ── Accordions ── */}
-      <div className="accordions-wrap">
-        <ContactAccordion user={user} />
-        <HistoryAccordion checkupHistory={userProfile?.checkHistory || []} />
+        {/* ── Accordions ── */}
+        <div className="space-y-3">
+          <ContactAccordion user={user} />
+          <HistoryAccordion checkupHistory={userProfile?.checkHistory || []} />
+        </div>
+
+        {/* ── Actions ── */}
+        <ActionButtons
+          onStartCheckup={() => router.push('/home')}
+          onEditProfile={() => setIsEditModalOpen(true)}
+          onSettings={() => setIsSettingsModalOpen(true)}
+          onLogout={() => setShowLogoutConfirm(true)}
+          t={t}
+        />
       </div>
-
-      {/* ── Actions ── */}
-      <ActionButtons
-        onStartCheckup={() => router.push('/home')}
-        onEditProfile={() => setIsEditModalOpen(true)}
-        onSettings={() => setIsSettingsModalOpen(true)}
-        onLogout={() => setShowLogoutConfirm(true)}
-        t={t}
-      />
 
       {/* ── Logout Sheet ── */}
       <LogoutSheet
@@ -191,6 +179,6 @@ export default function ProfileClient() {
         onSave={handleSaveProfile}
       />
       <SettingsModal isOpen={isSettingsModalOpen} onClose={() => setIsSettingsModalOpen(false)} />
-    </div>
+    </>
   )
 }

@@ -95,30 +95,63 @@ export default function ActionButtons({ onStartCheckup, onEditProfile, onSetting
         .divider-text { font-size: 0.68rem; color: var(--color-text-secondary); letter-spacing: 0.06em; text-transform: uppercase; }
       `}</style>
 
-      <div className="actions-wrap">
-        <button className="btn-cta" onClick={onStartCheckup}>
+      <div className="flex flex-col gap-2">
+        <button
+          onClick={onStartCheckup}
+          className="w-full py-3 px-4 rounded-xl font-semibold text-white flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
+          style={{
+            background: 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%)',
+            boxShadow: '0 6px 20px rgba(13, 110, 64, 0.3)'
+          }}
+        >
           <Sparkles size={16} />
           {t('profile.startCheckup')}
         </button>
 
-        <div className="divider">
-          <div className="divider-line" />
-          <span className="divider-text">{t('profile.account')}</span>
-          <div className="divider-line" />
+        <div className="flex items-center gap-3 py-2">
+          <div className="flex-1 h-px" style={{ background: 'var(--color-border)' }} />
+          <span className="text-xs uppercase tracking-wider" style={{ color: 'var(--color-text-secondary)' }}>
+            {t('profile.account')}
+          </span>
+          <div className="flex-1 h-px" style={{ background: 'var(--color-border)' }} />
         </div>
 
-        <div className="btn-row">
-          <button className="btn-sec" onClick={onEditProfile}>
+        <div className="flex gap-2">
+          <button
+            onClick={onEditProfile}
+            className="flex-1 py-2.5 px-3 rounded-xl font-medium flex items-center justify-center gap-2 transition-colors"
+            style={{
+              background: 'var(--color-surface)',
+              color: 'var(--color-text-primary)',
+              border: '1.5px solid var(--color-border)'
+            }}
+          >
             <User size={15} />
             {t('profile.editProfile')}
           </button>
-          <button className="btn-sec" onClick={onSettings}>
+          <button
+            onClick={onSettings}
+            className="flex-1 py-2.5 px-3 rounded-xl font-medium flex items-center justify-center gap-2 transition-colors"
+            style={{
+              background: 'var(--color-surface)',
+              color: 'var(--color-text-primary)',
+              border: '1.5px solid var(--color-border)'
+            }}
+          >
             <Settings size={15} />
             {t('profile.settings')}
           </button>
         </div>
 
-        <button className="btn-logout" onClick={onLogout}>
+        <button
+          onClick={onLogout}
+          className="w-full py-2.5 px-4 rounded-xl font-medium flex items-center justify-center gap-2 transition-colors"
+          style={{
+            background: 'var(--color-red-light)',
+            color: 'var(--color-danger)',
+            border: '1.5px solid var(--color-danger)'
+          }}
+        >
           <LogOut size={16} />
           {t('profile.signOut')}
         </button>
