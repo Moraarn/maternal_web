@@ -116,33 +116,48 @@ export default function SignupStepper({
     switch (currentStep) {
       case 1:
         return (
-          <PersonalDetailsStep
-            formData={formData}
-            showMap={showMap}
-            onUpdate={updateFormData}
-            onMapToggle={setShowMap}
-            locationInputRef={locationInputRef}
-            mapContainerRef={mapContainerRef}
-            mapRef={mapRef}
-            markerRef={markerRef}
-            geocoderRef={geocoderRef}
-          />
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+              Your details
+            </h2>
+            <PersonalDetailsStep
+              formData={formData}
+              showMap={showMap}
+              onUpdate={updateFormData}
+              onMapToggle={setShowMap}
+              locationInputRef={locationInputRef}
+              mapContainerRef={mapContainerRef}
+              mapRef={mapRef}
+              markerRef={markerRef}
+              geocoderRef={geocoderRef}
+            />
+          </div>
         )
 
       case 2:
         return (
-          <HealthStatusStep
-            formData={formData}
-            onUpdate={updateFormData}
-          />
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+              Health status
+            </h2>
+            <HealthStatusStep
+              formData={formData}
+              onUpdate={updateFormData}
+            />
+          </div>
         )
 
       case 3:
         return (
-          <CareTeamStep
-            formData={formData}
-            onUpdate={updateFormData}
-          />
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+              Care team
+            </h2>
+            <CareTeamStep
+              formData={formData}
+              onUpdate={updateFormData}
+            />
+          </div>
         )
 
       default:

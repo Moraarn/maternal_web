@@ -48,8 +48,7 @@ export default function HealthStatusStep({
 }: HealthStatusStepProps) {
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-semibold text-text-primary">Your health status</h2>
-      <p className="text-text-secondary">I am currently…</p>
+      <p style={{ color: 'var(--color-text-secondary)' }}>I am currently…</p>
 
       <div className="grid grid-cols-2 gap-3">
         {statusOptions.map((option) => (
@@ -59,20 +58,24 @@ export default function HealthStatusStep({
             onClick={() => onUpdate({ status: option.value, trimester: undefined })}
             className={`p-4 rounded-xl border-2 transition-all ${
               formData.status === option.value
-                ? 'border-primary bg-green-light'
-                : 'border-border bg-white hover:border-gray-300'
+                ? 'border-primary'
+                : 'border-border hover:border-gray-300'
             }`}
+            style={{
+              backgroundColor: formData.status === option.value ? 'var(--color-green-light)' : 'var(--color-surface)',
+              borderColor: formData.status === option.value ? 'var(--color-primary)' : 'var(--color-border)',
+            }}
           >
             <div className="text-2xl mb-2">{option.emoji}</div>
-            <div className="font-semibold text-sm text-text-primary">{option.label}</div>
-            <div className="text-xs text-text-secondary mt-1">{option.subtitle}</div>
+            <div className="font-semibold text-sm" style={{ color: 'var(--color-text-primary)' }}>{option.label}</div>
+            <div className="text-xs mt-1" style={{ color: 'var(--color-text-secondary)' }}>{option.subtitle}</div>
           </button>
         ))}
       </div>
 
       {formData.status === 'pregnant' && (
         <div>
-          <label className="block text-sm font-medium text-text-primary mb-2">
+          <label className="block text-sm font-medium mb-2" style={{ color: 'var(--color-text-primary)' }}>
             How far along?
           </label>
           <div className="flex gap-2">
@@ -83,9 +86,13 @@ export default function HealthStatusStep({
                 onClick={() => onUpdate({ trimester: option.value })}
                 className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${
                   formData.trimester === option.value
-                    ? 'bg-primary text-white'
-                    : 'bg-gray-100 text-text-secondary hover:bg-gray-200'
+                    ? 'text-white'
+                    : 'hover:bg-gray-200'
                 }`}
+                style={{
+                  backgroundColor: formData.trimester === option.value ? 'var(--color-primary)' : 'var(--color-surface)',
+                  color: formData.trimester === option.value ? 'white' : 'var(--color-text-secondary)',
+                }}
               >
                 {option.label}
               </button>

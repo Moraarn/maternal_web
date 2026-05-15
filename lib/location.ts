@@ -225,11 +225,49 @@ export class GoogleMapsService {
       script.async = true
       script.defer = true
       script.src = `https://maps.googleapis.com/maps/api/js?key=${this.apiKey}&libraries=places`
-      
+
       script.onload = () => resolve()
       script.onerror = () => reject(new Error('Failed to load Google Maps script'))
-      
+
       document.head.appendChild(script)
+    })
+  }
+
+  static async geocodeAddress(address: string): Promise<Location> {
+    console.log('🗺️ [GoogleMapsService] Geocoding address:', address)
+
+    if (!this.apiKey) {
+      console.error('❌ [GoogleMapsService] Google Maps API key is not configured')
+      throw new Error('Google Maps API key is not configured')
+    }
+
+    // Ensure Google Maps script is loaded
+    if (!window.google || !window.google.maps) {
+      console.error('❌ [GoogleMapsService] Google Maps not loaded. Call loadGoogleMapsScript first.')
+      throw new Error('Google Maps not loaded')
+    }
+
+    const geocoder = new window.google.maps.Geocoder()
+
+    return new Promise((resolve, reject) => {
+      geocoder.geocode(
+        { address: address },
+        (results: any[], status: string) => {
+          console.log(`📍 [GoogleMapsService] Geocode status: ${status}`)
+
+          if (status === window.google.maps.GeocoderStatus.OK && results && results[0]) {
+            const location = results[0].geometry.location
+            console.log(`✅ [GoogleMapsService] Geocoded to: ${location.lat()}, ${location.lng()}`)
+            resolve({
+              lat: location.lat(),
+              lng: location.lng()
+            })
+          } else {
+            console.error(`❌ [GoogleMapsService] Geocoding failed: ${status}`)
+            reject(new Error(`Geocoding failed: ${status}`))
+          }
+        }
+      )
     })
   }
 }

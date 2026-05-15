@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import AppShell from '@/components/ui/AppShell'
 import LoginForm from '@/components/auth/LoginForm'
 import SignupStepper from '@/components/auth/SignupStepper'
 
@@ -22,34 +23,76 @@ export default function AuthClient({ initialUser }: any) {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        Loading...
+        <div style={{ textAlign: 'center' }}>
+          <div style={{
+            width: 36, height: 36, borderRadius: '50%',
+            border: '3px solid var(--color-border)', borderTopColor: 'var(--color-primary)',
+            animation: 'spin 0.8s linear infinite', margin: '0 auto 12px'
+          }} />
+          <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.85rem' }}>Loading…</p>
+        </div>
       </div>
     )
   }
- 
-  return (
-    <div className="px-6 pt-10">
-      <div className="flex gap-2 mb-6">
-        <button onClick={() => setIsLogin(true)}>Login</button>
-        <button onClick={() => setIsLogin(false)}>Signup</button>
-      </div>
 
-      <div 
-        className="rounded-2xl p-6 space-y-4"
-        style={{ backgroundColor: 'var(--color-surface)' }}
-      >
-        {isLogin ? (
-          <LoginForm
-            onSwitchToSignup={() => setIsLogin(false)}
-            onSuccess={handleSuccess}
-          />
-        ) : (
-          <SignupStepper
-            onSwitchToLogin={() => setIsLogin(true)}
-            onSuccess={handleSuccess}
-          />
-        )}
+  return (
+    <AppShell
+      statusBar={{
+        title: isLogin ? 'Sign in' : 'Create account',
+        showBack: false,
+        color: 'primary',
+      }}
+      showBottomNav={false}
+    >
+      <div className="flex flex-col h-full px-4 py-4">
+        {/* Toggle between Login and Signup */}
+        <div className="flex gap-2 mb-6">
+          <button
+            onClick={() => setIsLogin(true)}
+            className={`flex-1 py-3 px-4 rounded-xl font-medium transition-all ${
+              isLogin
+                ? 'text-white'
+                : 'text-text-secondary'
+            }`}
+            style={{
+              backgroundColor: isLogin ? 'var(--color-primary)' : 'var(--color-surface)',
+            }}
+          >
+            Sign in
+          </button>
+          <button
+            onClick={() => setIsLogin(false)}
+            className={`flex-1 py-3 px-4 rounded-xl font-medium transition-all ${
+              !isLogin
+                ? 'text-white'
+                : 'text-text-secondary'
+            }`}
+            style={{
+              backgroundColor: !isLogin ? 'var(--color-primary)' : 'var(--color-surface)',
+            }}
+          >
+            Sign up
+          </button>
+        </div>
+
+        {/* Form Container */}
+        <div
+          className="rounded-2xl p-6 space-y-4"
+          style={{ backgroundColor: 'var(--color-surface)' }}
+        >
+          {isLogin ? (
+            <LoginForm
+              onSwitchToSignup={() => setIsLogin(false)}
+              onSuccess={handleSuccess}
+            />
+          ) : (
+            <SignupStepper
+              onSwitchToLogin={() => setIsLogin(true)}
+              onSuccess={handleSuccess}
+            />
+          )}
+        </div>
       </div>
-    </div>
+    </AppShell>
   )
 }

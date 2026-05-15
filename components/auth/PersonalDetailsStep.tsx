@@ -10,8 +10,8 @@ interface PersonalDetailsStepProps {
   showMap: boolean
   onUpdate: (updates: Partial<RegisterData>) => void
   onMapToggle: (show: boolean) => void
-  locationInputRef: React.RefObject<HTMLInputElement | null>
-  mapContainerRef: React.RefObject<HTMLDivElement | null>
+  locationInputRef: React.RefObject<HTMLInputElement>
+  mapContainerRef: React.RefObject<HTMLDivElement>
   mapRef: React.MutableRefObject<any>
   markerRef: React.MutableRefObject<any>
   geocoderRef: React.MutableRefObject<any>
@@ -30,10 +30,8 @@ export default function PersonalDetailsStep({
 }: PersonalDetailsStepProps) {
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-semibold text-text-primary">Your details</h2>
-
       <div>
-        <label className="block text-sm font-medium text-text-primary mb-2">
+        <label className="block text-sm font-medium mb-2" style={{ color: 'var(--color-text-primary)' }}>
           Full name
         </label>
         <input
@@ -41,13 +39,18 @@ export default function PersonalDetailsStep({
           value={formData.fullName}
           onChange={(e) => onUpdate({ fullName: e.target.value })}
           placeholder="e.g. Amina Wanjiru"
-          className="w-full px-4 py-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+          className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+          style={{
+            borderColor: 'var(--color-border)',
+            backgroundColor: 'var(--color-surface)',
+            color: 'var(--color-text-primary)'
+          }}
           required
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-text-primary mb-2">
+        <label className="block text-sm font-medium mb-2" style={{ color: 'var(--color-text-primary)' }}>
           Phone number
         </label>
         <PhoneInput
@@ -69,15 +72,20 @@ export default function PersonalDetailsStep({
       />
 
       <div>
-        <label className="block text-sm font-medium text-text-primary mb-2">
+        <label className="block text-sm font-medium mb-2" style={{ color: 'var(--color-text-primary)' }}>
           Create a password
-          <span className="text-text-secondary font-normal"> (min. 6 characters)</span>
+          <span className="font-normal" style={{ color: 'var(--color-text-secondary)' }}> (min. 6 characters)</span>
         </label>
         <input
           type="password"
           value={formData.password}
           onChange={(e) => onUpdate({ password: e.target.value })}
-          className="w-full px-4 py-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+          className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+          style={{
+            borderColor: 'var(--color-border)',
+            backgroundColor: 'var(--color-surface)',
+            color: 'var(--color-text-primary)'
+          }}
           required
           minLength={6}
         />

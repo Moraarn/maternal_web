@@ -1,4 +1,4 @@
-import { Mic, CheckCircle2, AlertCircle } from 'lucide-react'
+import { Mic, CheckCircle2, AlertCircle, MapPin } from 'lucide-react'
 import RiskResultComponent from './RiskResult'
 import HospitalList from './HospitalListDebug'
 import Button from '@/components/ui/Button'
@@ -12,17 +12,45 @@ interface ResultScreenProps {
   onCallEmergency: () => void
 }
 
-export default function ResultScreen({ 
-  riskResult, 
-  user, 
-  onBackToHome, 
-  onCallCHW, 
-  onCallEmergency 
+export default function ResultScreen({
+  riskResult,
+  user,
+  onBackToHome,
+  onCallCHW,
+  onCallEmergency
 }: ResultScreenProps) {
   return (
     <div className="space-y-6">
       {riskResult && (
         <>
+          {/* User Location */}
+          {user?.location && (
+            <div
+              className="p-4 rounded-xl"
+              style={{ backgroundColor: 'var(--color-surface)' }}
+            >
+              <div className="flex items-center gap-3">
+                <div style={{ color: 'var(--color-primary)' }}>
+                  <MapPin size={20} />
+                </div>
+                <div className="flex-1">
+                  <h4
+                    className="font-semibold text-sm mb-1"
+                    style={{ color: 'var(--color-text-primary)' }}
+                  >
+                    Your location
+                  </h4>
+                  <p
+                    className="text-sm"
+                    style={{ color: 'var(--color-text-secondary)' }}
+                  >
+                    {user.location}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           <RiskResultComponent result={{
             riskLevel: riskResult.riskLevel as 'low' | 'medium' | 'high',
             conditionChecked: 'Maternal health symptoms',
@@ -75,7 +103,7 @@ export default function ResultScreen({
           {/* High Risk: Hospital List */}
           {riskResult.riskLevel === 'high' && (
             <>
-              <HospitalList />
+              <HospitalList userLocation={user?.location} />
               
               <div>
                 <h3 className="text-xs uppercase text-text-secondary font-medium mb-3">

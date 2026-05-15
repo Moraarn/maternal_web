@@ -11,27 +11,31 @@ interface CareTeamStepProps {
 export default function CareTeamStep({ formData, onUpdate }: CareTeamStepProps) {
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-semibold text-text-primary">Your care team</h2>
-      <p className="text-text-secondary text-sm">
+      <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
         This helps us alert the right people in an emergency
       </p>
 
       <div>
-        <label className="block text-sm font-medium text-text-primary mb-2">
+        <label className="block text-sm font-medium mb-2" style={{ color: 'var(--color-text-primary)' }}>
           Health worker's name
-          <span className="text-text-secondary font-normal"> (optional)</span>
+          <span className="font-normal" style={{ color: 'var(--color-text-secondary)' }}> (optional)</span>
         </label>
         <input
           type="text"
           value={formData.chwName}
           onChange={(e) => onUpdate({ chwName: e.target.value })}
           placeholder="e.g. Nurse Fatuma Wanjiku"
-          className="w-full px-4 py-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+          className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+          style={{
+            borderColor: 'var(--color-border)',
+            backgroundColor: 'var(--color-surface)',
+            color: 'var(--color-text-primary)'
+          }}
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-text-primary mb-2">
+        <label className="block text-sm font-medium mb-2" style={{ color: 'var(--color-text-primary)' }}>
           Health worker's phone
         </label>
         <PhoneInput
@@ -41,21 +45,26 @@ export default function CareTeamStep({ formData, onUpdate }: CareTeamStepProps) 
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-text-primary mb-2">
+        <label className="block text-sm font-medium mb-2" style={{ color: 'var(--color-text-primary)' }}>
           Emergency contact name
-          <span className="text-text-secondary font-normal"> (optional)</span>
+          <span className="font-normal" style={{ color: 'var(--color-text-secondary)' }}> (optional)</span>
         </label>
         <input
           type="text"
           value={formData.emergencyContactName}
           onChange={(e) => onUpdate({ emergencyContactName: e.target.value })}
           placeholder="e.g. Margaret (sister)"
-          className="w-full px-4 py-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+          className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+          style={{
+            borderColor: 'var(--color-border)',
+            backgroundColor: 'var(--color-surface)',
+            color: 'var(--color-text-primary)'
+          }}
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-text-primary mb-2">
+        <label className="block text-sm font-medium mb-2" style={{ color: 'var(--color-text-primary)' }}>
           Emergency contact phone
         </label>
         <PhoneInput

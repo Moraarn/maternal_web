@@ -45,21 +45,50 @@
   * {
     @apply border-border;
   }
-  
+
   body {
     @apply bg-background text-text-primary font-sans antialiased;
     background-color: var(--color-background);
     color: var(--color-text-primary);
     transition: background-color 0.3s ease, color 0.3s ease;
   }
-  
+
   html {
     font-family: 'Inter', system-ui, sans-serif;
   }
-  
+
   /* Dark mode transitions */
   * {
     transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+  }
+
+  /* Ensure phone input flag dropdown is visible and follows theme */
+  .react-tel-input .flag-dropdown {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    background-color: var(--color-surface) !important;
+    border-color: var(--color-border) !important;
+  }
+  .react-tel-input .selected-flag {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+  .react-tel-input .country-list {
+    background-color: var(--color-surface) !important;
+    border-color: var(--color-border) !important;
+  }
+  .react-tel-input .country-list .country {
+    color: var(--color-text-primary) !important;
+  }
+  .react-tel-input .country-list .country:hover {
+    background-color: var(--color-surface-hover, var(--color-surface)) !important;
+  }
+  .react-tel-input input {
+    background-color: var(--color-surface) !important;
+    color: var(--color-text-primary) !important;
+    border-color: var(--color-border) !important;
   }
 }
 
