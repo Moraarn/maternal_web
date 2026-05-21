@@ -65,7 +65,6 @@ export default function TalkClient({ initialMessages, userContext, user }: TalkC
   const [messages, setMessages] = useState<Message[]>(initialMessages)
   const [isTyping, setIsTyping] = useState(false)
   const [isRecording, setIsRecording] = useState(false)
-  const [transcript, setTranscript] = useState('')
   
   // Call state
   const [isInCall, setIsInCall] = useState(false)
@@ -193,33 +192,32 @@ export default function TalkClient({ initialMessages, userContext, user }: TalkC
 
   const handleVoiceInput = () => {
     if (isRecording) {
-      // Stop recording
+      // Stop recording and send the transcript
       setIsRecording(false)
-      if (transcript.trim()) {
-        sendMessage(transcript)
-        setTranscript('')
+      stopUserListening()
+      if (userTranscript.trim()) {
+        sendMessage(userTranscript)
+        resetUserTranscript()
       }
     } else {
       // Start recording
       setIsRecording(true)
-      setTranscript('')
-      
-      // TODO: Implement Web Speech API
-      // For now, simulate voice input
-      setTimeout(() => {
-        const simulatedTranscripts = [
-          "I have been having headaches lately",
-          "I feel dizzy when I stand up",
-          "I have some swelling in my hands",
-          "I'm feeling fine today"
-        ]
-        const randomTranscript = simulatedTranscripts[Math.floor(Math.random() * simulatedTranscripts.length)]
-        setTranscript(randomTranscript)
-        setIsRecording(false)
-        sendMessage(randomTranscript)
-      }, 2000)
+      resetUserTranscript()
+      startUserListening()
     }
   }
+
+  // Handle speech completion in chat mode
+  useEffect(() => {
+    if (isRecording && !isInCall && userTranscript && !isUserListening) {
+      // Speech recognition stopped naturally, send the message
+      setIsRecording(false)
+      if (userTranscript.trim()) {
+        sendMessage(userTranscript)
+        resetUserTranscript()
+      }
+    }
+  }, [isUserListening, userTranscript, isRecording, isInCall])
 
   const handleUserSpeech = async (userSpeech: string) => {
     if (!userSpeech.trim()) return
@@ -453,7 +451,7 @@ export default function TalkClient({ initialMessages, userContext, user }: TalkC
           onVoiceInput={handleVoiceInput}
           onStartCall={startCall}
           isRecording={isRecording}
-          transcript={transcript}
+          transcript={userTranscript}
         />
       </div>
     </AppShell>

@@ -41,6 +41,19 @@ export default function ChatInput({ onSendMessage, onVoiceInput, onStartCall, is
         backgroundColor: 'var(--color-background)'
       }}
     >
+      {/* Transcript display when recording */}
+      {isRecording && transcript && (
+        <div 
+          className="mb-3 p-3 rounded-lg text-sm italic"
+          style={{
+            backgroundColor: 'var(--color-green-light)',
+            color: 'var(--color-text-secondary)'
+          }}
+        >
+          "{transcript}"
+        </div>
+      )}
+      
       <div className="flex items-center gap-3">
         <input
           ref={inputRef}
@@ -48,7 +61,7 @@ export default function ChatInput({ onSendMessage, onVoiceInput, onStartCall, is
           value={inputText}
           onChange={handleInputChange}
           onKeyPress={handleKeyPress}
-          placeholder="Type how you feel…"
+          placeholder={isRecording ? "Listening..." : "Type how you feel…"}
           className="flex-1 px-4 py-3 border rounded-2xl focus:outline-none focus:ring-2 focus:border-transparent text-sm"
           style={{
             borderColor: 'var(--color-border)',
