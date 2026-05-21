@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import AppShell from '@/components/ui/AppShell'
 import LoginForm from '@/components/auth/LoginForm'
 import SignupStepper from '@/components/auth/SignupStepper'
+import AuthHeader from '@/components/auth/AuthHeader'
 
 export default function AuthClient({ initialUser }: any) {
   const [isLogin, setIsLogin] = useState(true)
@@ -45,35 +46,12 @@ export default function AuthClient({ initialUser }: any) {
       showBottomNav={false}
     >
       <div className="flex flex-col h-full px-4 py-4">
-        {/* Toggle between Login and Signup */}
-        <div className="flex gap-2 mb-6">
-          <button
-            onClick={() => setIsLogin(true)}
-            className={`flex-1 py-3 px-4 rounded-xl font-medium transition-all ${
-              isLogin
-                ? 'text-white'
-                : 'text-text-secondary'
-            }`}
-            style={{
-              backgroundColor: isLogin ? 'var(--color-primary)' : 'var(--color-surface)',
-            }}
-          >
-            Sign in
-          </button>
-          <button
-            onClick={() => setIsLogin(false)}
-            className={`flex-1 py-3 px-4 rounded-xl font-medium transition-all ${
-              !isLogin
-                ? 'text-white'
-                : 'text-text-secondary'
-            }`}
-            style={{
-              backgroundColor: !isLogin ? 'var(--color-primary)' : 'var(--color-surface)',
-            }}
-          >
-            Sign up
-          </button>
-        </div>
+        {/* Auth Header with logo and toggle buttons */}
+        <AuthHeader
+          activeTab={isLogin ? 'signin' : 'signup'}
+          onSignIn={() => setIsLogin(true)}
+          onCreateAccount={() => setIsLogin(false)}
+        />
 
         {/* Form Container */}
         <div
