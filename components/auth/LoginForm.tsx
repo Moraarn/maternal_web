@@ -43,11 +43,10 @@ export default function LoginForm({ onSwitchToSignup, onSuccess }: LoginFormProp
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
           placeholder="+254 7__ ___ ___"
-          className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+          className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-gray-900"
           style={{
             borderColor: 'var(--color-border)',
             backgroundColor: 'var(--color-surface)',
-            color: 'var(--color-text-primary)'
           }}
           required
           disabled={authLoading}
@@ -63,11 +62,10 @@ export default function LoginForm({ onSwitchToSignup, onSuccess }: LoginFormProp
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Enter your password"
-          className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+          className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-gray-900"
           style={{
             borderColor: 'var(--color-border)',
             backgroundColor: 'var(--color-surface)',
-            color: 'var(--color-text-primary)'
           }}
           required
           disabled={authLoading}

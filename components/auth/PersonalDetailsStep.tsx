@@ -39,11 +39,10 @@ export default function PersonalDetailsStep({
           value={formData.fullName}
           onChange={(e) => onUpdate({ fullName: e.target.value })}
           placeholder="e.g. Amina Wanjiru"
-          className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+          className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-gray-900"
           style={{
             borderColor: 'var(--color-border)',
             backgroundColor: 'var(--color-surface)',
-            color: 'var(--color-text-primary)'
           }}
           required
         />
@@ -80,11 +79,10 @@ export default function PersonalDetailsStep({
           type="password"
           value={formData.password}
           onChange={(e) => onUpdate({ password: e.target.value })}
-          className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+          className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-gray-900"
           style={{
             borderColor: 'var(--color-border)',
             backgroundColor: 'var(--color-surface)',
-            color: 'var(--color-text-primary)'
           }}
           required
           minLength={6}

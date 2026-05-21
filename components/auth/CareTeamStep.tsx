@@ -25,11 +25,10 @@ export default function CareTeamStep({ formData, onUpdate }: CareTeamStepProps) 
           value={formData.chwName}
           onChange={(e) => onUpdate({ chwName: e.target.value })}
           placeholder="e.g. Nurse Fatuma Wanjiku"
-          className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+          className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-gray-900"
           style={{
             borderColor: 'var(--color-border)',
             backgroundColor: 'var(--color-surface)',
-            color: 'var(--color-text-primary)'
           }}
         />
       </div>
@@ -54,11 +53,10 @@ export default function CareTeamStep({ formData, onUpdate }: CareTeamStepProps) 
           value={formData.emergencyContactName}
           onChange={(e) => onUpdate({ emergencyContactName: e.target.value })}
           placeholder="e.g. Margaret (sister)"
-          className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+          className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-gray-900"
           style={{
             borderColor: 'var(--color-border)',
             backgroundColor: 'var(--color-surface)',
-            color: 'var(--color-text-primary)'
           }}
         />
       </div>
