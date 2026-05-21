@@ -1,6 +1,6 @@
 'use server'
 
-import { getToken } from '@/lib/auth'
+import { getServerToken } from '@/lib/auth'
 
 
 
@@ -40,7 +40,7 @@ export interface ConversationResponse {
 }
 
 export async function getApiConfig(): Promise<{ url: string; headers: Record<string, string> }> {
-  const token = getToken()
+  const token = await getServerToken()
   
   return {
     url: 'http://localhost:5000/api/talk',

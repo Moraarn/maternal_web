@@ -10,3 +10,22 @@ export async function fetchCurrentUser(): Promise<User | null> {
     return null
   }
 }
+
+export function getToken(): string | null {
+  // Client-side: get from localStorage
+  if (typeof window !== 'undefined') {
+    return localStorage.getItem('token')
+  }
+  return null
+}
+
+// Server-side token retrieval (use this in server actions/components)
+export async function getServerToken(): Promise<string | null> {
+  try {
+    const { cookies } = await import('next/headers')
+    const cookieStore = cookies()
+    return cookieStore.get('token')?.value || null
+  } catch {
+    return null
+  }
+}
