@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import TalkClient from '../../components/talk/TalkClient'
 
+export const dynamic = 'force-dynamic'
+
 interface Message {
   id: string
   text: string
