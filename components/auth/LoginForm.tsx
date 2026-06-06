@@ -62,10 +62,11 @@ export default function LoginForm({ onSwitchToSignup, onSuccess }: LoginFormProp
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Enter your password"
-          className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-gray-900"
+          className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
           style={{
             borderColor: 'var(--color-border)',
             backgroundColor: 'var(--color-surface)',
+            color: 'var(--color-text-primary)',
           }}
           required
           disabled={authLoading}

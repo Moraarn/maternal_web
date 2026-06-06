@@ -118,10 +118,11 @@ export default function LocationPicker({
           defaultValue={locationValue}
           onChange={(e) => onLocationChange(e.target.value)}
           placeholder="e.g. Kibera, Nairobi"
-          className="w-full px-4 py-3 pr-12 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-gray-900"
+          className="w-full px-4 py-3 pr-12 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
           style={{
             borderColor: 'var(--color-border)',
             backgroundColor: 'var(--color-surface)',
+            color: 'var(--color-text-primary)',
           }}
           required
         />
