@@ -2,7 +2,13 @@
 
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { getToken } from '@/lib/auth'
+
+function getToken(): string | null {
+  if (typeof window !== 'undefined') {
+    return localStorage.getItem('token')
+  }
+  return null
+}
 
 export default function Home() {
   const router = useRouter()
