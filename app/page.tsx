@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 
 function getToken(): string | null {
   if (typeof window !== 'undefined') {
-    return localStorage.getItem('token')
+    return localStorage.getItem('accessToken')
   }
   return null
 }

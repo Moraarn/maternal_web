@@ -6,6 +6,7 @@ import { useTheme } from '@/contexts/ThemeContext'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { getUserProfile, UserProfile } from '@/app/profile/actions'
 import { fetchCurrentUser } from '@/lib/auth'
+import { logout } from '@/app/auth/actions'
 import AppShell from '@/components/ui/AppShell'
 import HeroSection from '@/components/profile/HeroSection'
 import CheckupCard from '@/components/profile/CheckupCard'
@@ -107,20 +108,22 @@ export default function ProfileClient() {
 
   const handleLogout = async () => {
     try {
+      // Call server action to clear HttpOnly cookies
+      await logout()
+      
+      // Call backend logout endpoint
       await fetch('http://localhost:5000/auth/logout', { method: 'POST', credentials: 'include' })
     } catch (error) {
       console.error('Logout error:', error)
     }
 
-    const expiredCookie = 'expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; SameSite=Lax'
-    document.cookie = `CystaNiva_token=; ${expiredCookie}`
-    document.cookie = `nab_CystaNiva_token=; ${expiredCookie}`
-    document.cookie = `access_token=; ${expiredCookie}`
-    document.cookie = `refresh_token=; ${expiredCookie}`
-    localStorage.removeItem('access_token')
+    // Clear localStorage
+    localStorage.removeItem('accessToken')
+    localStorage.removeItem('currentUser')
+    localStorage.removeItem('token')
 
-    router.replace('/auth')
-    router.refresh()
+    // Force redirect to auth page
+    window.location.href = '/auth'
   }
 
   const handleSaveProfile = async (updatedUser: any) => {
