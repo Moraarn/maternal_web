@@ -1,17 +1,21 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? ''
+const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, '')
 
 if (!API_URL) {
   throw new Error('NEXT_PUBLIC_API_URL is not defined')
 }
 
 const joinUrl = (base: string, path: string) => {
-  if (!base.endsWith('/') && !path.startsWith('/')) return `${base}/${path}`
-  if (base.endsWith('/') && path.startsWith('/')) return `${base}${path.slice(1)}`
-  return `${base}${path}`
+  const cleanBase = base.replace(/\/$/, '')
+  const cleanPath = path.startsWith('/') ? path : `/${path}`
+
+  return `${cleanBase}${cleanPath}`
 }
 
 const request = async (endpoint: string, options: RequestInit = {}) => {
+  const url = joinUrl(API_URL, endpoint)
+
   console.log(`🚀 REQUEST START: ${endpoint}`)
+  console.log(`🌍 REQUEST URL: ${url}`)
 
   if (options.body) {
     try {
@@ -22,13 +26,13 @@ const request = async (endpoint: string, options: RequestInit = {}) => {
   }
 
   try {
-    const response = await fetch(joinUrl(API_URL, endpoint), {
+    const response = await fetch(url, {
+      ...options,
       credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
-        ...options.headers,
+        ...(options.headers || {}),
       },
-      ...options,
     })
 
     console.log(`📥 RESPONSE STATUS: ${response.status}`)
@@ -36,7 +40,7 @@ const request = async (endpoint: string, options: RequestInit = {}) => {
     const text = await response.text()
     console.log('📥 RAW RESPONSE:', text)
 
-    let json: any = null
+    let json: any = {}
 
     try {
       json = text ? JSON.parse(text) : {}
@@ -72,6 +76,5 @@ export const clientApi = {
       body: JSON.stringify(data),
     }),
 
-  delete: (endpoint: string) =>
-    request(endpoint, { method: 'DELETE' }),
+  delete: (endpoint: string) => request(endpoint, { method: 'DELETE' }),
 }

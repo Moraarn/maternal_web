@@ -1,7 +1,13 @@
-import { createNextApiBridge } from 'next-api-bridge';
+import { createNextApiBridge } from 'next-api-bridge'
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, '')
+
+if (!API_URL) {
+  throw new Error('NEXT_PUBLIC_API_URL is not defined')
+}
 
 export const api = createNextApiBridge({
-  baseUrl: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000',
+  baseUrl: API_URL,
   auth: {
     type: 'bearer',
     tokenCookie: 'access_token',
@@ -9,5 +15,4 @@ export const api = createNextApiBridge({
     prefix: 'Bearer',
   },
   cookiePrefix: 'nab_',
-});
-
+})
