@@ -44,11 +44,24 @@ export function useAuth() {
       }
     } catch (err: any) {
       console.error('❌ LOGIN ERROR:', err)
-      setError(err.message || 'Login failed')
+      
+      // Check if it's a network error (failed to fetch, CORS, server unavailable)
+      const isNetworkError = 
+        err.message === 'Failed to fetch' ||
+        err.message.includes('NetworkError') ||
+        err.message.includes('ECONNREFUSED') ||
+        err.message.includes('fetch failed') ||
+        err.name === 'TypeError' && err.message === 'Failed to fetch'
+      
+      const errorMessage = isNetworkError 
+        ? 'Failed to connect to server. Please check your internet connection and try again.'
+        : err.message || 'Login failed'
+      
+      setError(errorMessage)
 
       return {
         success: false,
-        error: err.message,
+        error: errorMessage,
       }
     } finally {
       setIsLoading(false)
@@ -70,8 +83,23 @@ export function useAuth() {
 
       return { success: true, user: response.user }
     } catch (err: any) {
-      setError(err.message || 'Signup failed')
-      return { success: false, error: err.message }
+      console.error('❌ SIGNUP ERROR:', err)
+      
+      // Check if it's a network error (failed to fetch, CORS, server unavailable)
+      const isNetworkError = 
+        err.message === 'Failed to fetch' ||
+        err.message.includes('NetworkError') ||
+        err.message.includes('ECONNREFUSED') ||
+        err.message.includes('fetch failed') ||
+        err.name === 'TypeError' && err.message === 'Failed to fetch'
+      
+      const errorMessage = isNetworkError 
+        ? 'Failed to connect to server. Please check your internet connection and try again.'
+        : err.message || 'Signup failed'
+      
+      setError(errorMessage)
+      
+      return { success: false, error: errorMessage }
     } finally {
       setIsLoading(false)
     }

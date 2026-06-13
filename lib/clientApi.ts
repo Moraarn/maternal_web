@@ -51,13 +51,23 @@ const request = async (endpoint: string, options: RequestInit = {}) => {
     }
 
     if (!response.ok) {
-      throw new Error(json?.message || `HTTP ${response.status}`)
+      // Extract the error message from the backend response
+      // NestJS returns errors in different formats depending on the exception type
+      const errorMessage = json?.message || json?.error || json?.message?.[0] || `HTTP ${response.status}`
+      throw new Error(errorMessage)
     }
 
     return json
   } catch (error) {
     console.error(`❌ REQUEST FAILED: ${endpoint}`, error)
-    throw error
+    
+    // Re-throw the error as-is if it's already an Error with a message
+    if (error instanceof Error) {
+      throw error
+    }
+    
+    // Otherwise wrap it in a generic error
+    throw new Error('An unexpected error occurred')
   }
 }
 
