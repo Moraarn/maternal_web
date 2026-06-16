@@ -14,14 +14,16 @@ const joinUrl = (base: string, path: string) => {
 const request = async (endpoint: string, options: RequestInit = {}) => {
   const url = joinUrl(API_URL, endpoint)
 
-  console.log(`🚀 REQUEST START: ${endpoint}`)
-  console.log(`🌍 REQUEST URL: ${url}`)
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`🚀 REQUEST START: ${endpoint}`)
+    console.log(`🌍 REQUEST URL: ${url}`)
 
-  if (options.body) {
-    try {
-      console.log('📤 PAYLOAD:', JSON.parse(String(options.body)))
-    } catch {
-      console.log('📤 RAW PAYLOAD:', options.body)
+    if (options.body) {
+      try {
+        console.log('📤 PAYLOAD:', JSON.parse(String(options.body)))
+      } catch {
+        console.log('📤 RAW PAYLOAD:', options.body)
+      }
     }
   }
 
@@ -35,16 +37,22 @@ const request = async (endpoint: string, options: RequestInit = {}) => {
       },
     })
 
-    console.log(`📥 RESPONSE STATUS: ${response.status}`)
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`📥 RESPONSE STATUS: ${response.status}`)
+    }
 
     const text = await response.text()
-    console.log('📥 RAW RESPONSE:', text)
+    if (process.env.NODE_ENV === 'development') {
+      console.log('📥 RAW RESPONSE:', text)
+    }
 
     let json: any = {}
 
     try {
       json = text ? JSON.parse(text) : {}
-      console.log('✅ PARSED RESPONSE:', json)
+      if (process.env.NODE_ENV === 'development') {
+        console.log('✅ PARSED RESPONSE:', json)
+      }
     } catch (parseError) {
       console.error('❌ JSON PARSE ERROR:', parseError)
       throw new Error('Server returned invalid JSON')
@@ -59,7 +67,9 @@ const request = async (endpoint: string, options: RequestInit = {}) => {
 
     return json
   } catch (error) {
-    console.error(`❌ REQUEST FAILED: ${endpoint}`, error)
+    if (process.env.NODE_ENV === 'development') {
+      console.error(`❌ REQUEST FAILED: ${endpoint}`, error)
+    }
     
     // Re-throw the error as-is if it's already an Error with a message
     if (error instanceof Error) {

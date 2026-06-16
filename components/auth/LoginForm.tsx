@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Button from '@/components/ui/Button'
 import { useAuth } from '@/hooks/useAuth'
+import PhoneInput from './PhoneInput'
+import PasswordInput from './PasswordInput'
 
 interface LoginFormProps {
   onSwitchToSignup: () => void
@@ -17,10 +19,27 @@ export default function LoginForm({ onSwitchToSignup, onSuccess }: LoginFormProp
   const router = useRouter()
   const { login, isLoading: authLoading, error: authError, clearError } = useAuth()
 
+  const validatePhone = (value: string): boolean => {
+    // Remove all non-digit characters for validation
+    const digitsOnly = value.replace(/\D/g, '')
+    // Allow reasonable phone length (10-15 digits for international numbers)
+    return digitsOnly.length >= 10 && digitsOnly.length <= 15
+  }
+
+  const handlePhoneChange = (fullNumber: string) => {
+    setPhone(fullNumber)
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
     clearError()
+
+    // Validate phone before submission
+    if (!validatePhone(phone)) {
+      setError('Please enter a valid phone number (10-15 digits)')
+      return
+    }
 
     const result = await login({ phone, password })
 
@@ -38,18 +57,10 @@ export default function LoginForm({ onSwitchToSignup, onSuccess }: LoginFormProp
         <label className="block text-sm font-medium mb-2" style={{ color: 'var(--color-text-primary)' }}>
           Phone number
         </label>
-        <input
-          type="tel"
+        <PhoneInput
           value={phone}
-          onChange={(e) => setPhone(e.target.value)}
+          onChange={handlePhoneChange}
           placeholder="+254 7__ ___ ___"
-          className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-gray-900"
-          style={{
-            borderColor: 'var(--color-border)',
-            backgroundColor: 'var(--color-surface)',
-          }}
-          required
-          disabled={authLoading}
         />
       </div>
 
@@ -57,17 +68,10 @@ export default function LoginForm({ onSwitchToSignup, onSuccess }: LoginFormProp
         <label className="block text-sm font-medium mb-2" style={{ color: 'var(--color-text-primary)' }}>
           Password
         </label>
-        <input
-          type="password"
+        <PasswordInput
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={setPassword}
           placeholder="Enter your password"
-          className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-          style={{
-            borderColor: 'var(--color-border)',
-            backgroundColor: 'var(--color-surface)',
-            color: 'var(--color-text-primary)',
-          }}
           required
           disabled={authLoading}
         />
@@ -102,7 +106,7 @@ export default function LoginForm({ onSwitchToSignup, onSuccess }: LoginFormProp
           <div className="w-full border-t" style={{ borderColor: 'var(--color-border)' }}></div>
         </div>
         <div className="relative flex justify-center text-sm">
-          <span className="px-2" style={{ backgroundColor: 'var(--color-surface)', color: 'var(--color-text-secondary)' }}>or</span>
+          <span className="px-2" style={{ backgroundColor: 'white', color: 'var(--color-text-secondary)' }}>or</span>
         </div>
       </div>
 

@@ -19,7 +19,6 @@ export default function SignupStepper({
   const [isLoading, setIsLoading] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [showMap, setShowMap] = useState(false)
 
   const [formData, setFormData] = useState<RegisterData>({
     fullName: '',
@@ -33,12 +32,6 @@ export default function SignupStepper({
     emergencyContactName: '',
     emergencyContactPhone: '',
   })
-
-  const locationInputRef = useRef<HTMLInputElement | null>(null)
-  const mapContainerRef = useRef<HTMLDivElement | null>(null)
-  const mapRef = useRef<any>(null)
-  const markerRef = useRef<any>(null)
-  const geocoderRef = useRef<any>(null)
 
   const updateFormData = (updates: Partial<RegisterData>) => {
     setFormData((prev) => ({ ...prev, ...updates }))
@@ -91,9 +84,13 @@ export default function SignupStepper({
   const canProceed = () => {
     switch (currentStep) {
       case 1:
+        // Validate phone number format (10-15 digits)
+        const digitsOnly = formData.phone.replace(/\D/g, '')
+        const isPhoneValid = digitsOnly.length >= 10 && digitsOnly.length <= 15
         return !!(
           formData.fullName &&
           formData.phone &&
+          isPhoneValid &&
           formData.location &&
           formData.password.length >= 6
         )
@@ -122,14 +119,7 @@ export default function SignupStepper({
             </h2>
             <PersonalDetailsStep
               formData={formData}
-              showMap={showMap}
               onUpdate={updateFormData}
-              onMapToggle={setShowMap}
-              locationInputRef={locationInputRef}
-              mapContainerRef={mapContainerRef}
-              mapRef={mapRef}
-              markerRef={markerRef}
-              geocoderRef={geocoderRef}
             />
           </div>
         )
@@ -166,7 +156,7 @@ export default function SignupStepper({
   }
 
   return (
-    <div>
+    <>
       <ProgressDots currentStep={currentStep} totalSteps={3} />
 
       {renderStep()}
@@ -190,12 +180,13 @@ export default function SignupStepper({
           <button
             type="button"
             onClick={onSwitchToLogin}
-            className="text-sm text-primary hover:underline"
+            className="text-sm hover:underline"
+            style={{ color: 'var(--color-primary)' }}
           >
             Already have an account? Sign in
           </button>
         </div>
       )}
-    </div>
+    </>
   )
 }

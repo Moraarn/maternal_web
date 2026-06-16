@@ -32,7 +32,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         className={`${baseClasses} ${widthClasses} ${className} ${
           variant === 'outline' ? 'hover:bg-opacity-10' : 'hover:opacity-90'
-        } disabled:opacity-40 disabled:pointer-events-none`}
+        } disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none`}
         style={getButtonStyles()}
         disabled={disabled}
         {...props}

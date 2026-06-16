@@ -4,7 +4,6 @@ import "./globals.css";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { Toaster } from "sonner";
-import GoogleMapsLoader from "@/components/ui/GoogleMapsLoader";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -24,16 +23,14 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} font-sans`}>
       <body className="min-h-screen bg-gray-100 antialiased">
-        <GoogleMapsLoader>
-          <ThemeProvider>
-            <LanguageProvider>
-              <div className="min-h-screen-dvh flex items-center justify-center p-4">
-                {children}
-              </div>
-              <Toaster />
-            </LanguageProvider>
-          </ThemeProvider>
-        </GoogleMapsLoader>
+        <ThemeProvider>
+          <LanguageProvider>
+            <div className="min-h-screen-dvh flex items-center justify-center p-4">
+              {children}
+            </div>
+            <Toaster />
+          </LanguageProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

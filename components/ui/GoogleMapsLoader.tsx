@@ -24,14 +24,18 @@ export default function GoogleMapsLoader({ children }: GoogleMapsLoaderProps) {
       const script = document.createElement('script')
       script.async = true
       script.defer = true
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&loading=async`
       
       script.onload = () => {
-        console.log('Google Maps script loaded successfully')
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Google Maps script loaded successfully')
+        }
       }
       
       script.onerror = () => {
-        console.error('Failed to load Google Maps script')
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Failed to load Google Maps script')
+        }
       }
       
       document.head.appendChild(script)

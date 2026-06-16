@@ -1,6 +1,6 @@
 'use client'
 
-import { Users } from 'lucide-react'
+import { Heart } from 'lucide-react'
 
 interface AuthHeaderProps {
   onSignIn?: () => void
@@ -10,20 +10,23 @@ interface AuthHeaderProps {
 
 export default function AuthHeader({ onSignIn, onCreateAccount, activeTab = 'signin' }: AuthHeaderProps) {
   return (
-    <div className="flex flex-col items-center mb-8">
+    <div className="flex flex-col items-center">
       {/* Logo and Brand */}
-      <div className="flex flex-col items-center mb-8">
+      <div className="flex flex-col items-center mb-5">
         {/* Logo Circle */}
         <div 
-          className="w-16 h-16 rounded-full flex items-center justify-center mb-4"
-          style={{ backgroundColor: '#059669' }}
+          className="w-16 h-16 rounded-2xl flex items-center justify-center mb-3"
+          style={{ 
+            backgroundColor: '#059669',
+            boxShadow: '0 2px 8px rgba(5, 150, 105, 0.2)'
+          }}
         >
-          <Users size={32} className="text-white" />
+          <Heart size={32} className="text-white" fill="white" />
         </div>
         
         {/* App Name */}
         <h1 
-          className="text-3xl font-bold mb-1"
+          className="text-2xl font-bold mb-1 tracking-tight"
           style={{ color: '#1f2937' }}
         >
           CystaNiva
@@ -31,7 +34,7 @@ export default function AuthHeader({ onSignIn, onCreateAccount, activeTab = 'sig
         
         {/* Subtitle */}
         <p 
-          className="text-sm"
+          className="text-xs font-medium"
           style={{ color: '#6b7280' }}
         >
           Maternal health risk checker
@@ -39,10 +42,10 @@ export default function AuthHeader({ onSignIn, onCreateAccount, activeTab = 'sig
       </div>
 
       {/* Tab Buttons */}
-      <div className="flex gap-3 w-full max-w-sm">
+      <div className="flex gap-2 w-full max-w-sm">
         <button
           onClick={onSignIn}
-          className={`flex-1 py-3 px-6 rounded-full font-medium transition-all ${
+          className={`flex-1 py-2.5 px-4 rounded-xl font-medium transition-all text-sm ${
             activeTab === 'signin' ? 'text-white' : 'text-gray-700'
           }`}
           style={{
@@ -54,7 +57,7 @@ export default function AuthHeader({ onSignIn, onCreateAccount, activeTab = 'sig
         </button>
         <button
           onClick={onCreateAccount}
-          className={`flex-1 py-3 px-6 rounded-full font-medium transition-all ${
+          className={`flex-1 py-2.5 px-4 rounded-xl font-medium transition-all text-sm ${
             activeTab === 'signup' ? 'text-white' : 'text-gray-700'
           }`}
           style={{

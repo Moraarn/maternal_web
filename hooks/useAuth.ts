@@ -15,14 +15,18 @@ export function useAuth() {
   const router = useRouter()
 
   const login = async (credentials: LoginCredentials) => {
-    console.log('🔐 LOGIN START')
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🔐 LOGIN START')
+    }
     setIsLoading(true)
     setError(null)
 
     try {
       const response = await clientApi.post('/auth/login', credentials)
 
-      console.log('✅ LOGIN RESPONSE:', response)
+      if (process.env.NODE_ENV === 'development') {
+        console.log('✅ LOGIN RESPONSE:', response)
+      }
 
       const user = response.user
       const token = response.accessToken
@@ -35,7 +39,9 @@ export function useAuth() {
       localStorage.setItem('currentUser', JSON.stringify(user))
       localStorage.setItem('accessToken', token)
 
-      console.log('💾 SESSION STORED')
+      if (process.env.NODE_ENV === 'development') {
+        console.log('💾 SESSION STORED')
+      }
 
       return {
         success: true,
@@ -65,7 +71,9 @@ export function useAuth() {
       }
     } finally {
       setIsLoading(false)
-      console.log('🔐 LOGIN END')
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔐 LOGIN END')
+      }
     }
   }
 

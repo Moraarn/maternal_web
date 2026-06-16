@@ -25,18 +25,23 @@ export const loadGoogleMaps = (): Promise<void> => {
   // Create and append script only once
   loadPromise = new Promise((resolve, reject) => {
     const script = document.createElement('script')
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places,geocoding`
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places,geocoding&callback=initGoogleMaps`
     script.async = true
-    script.defer = false
+    script.defer = true
     script.id = 'google-maps-script' // Prevent duplicate IDs
 
-    script.onload = () => {
-      console.log('✅ Google Maps API loaded successfully')
+    // Set up global callback
+    ;(window as any).initGoogleMaps = () => {
+      if (process.env.NODE_ENV === 'development') {
+        console.log('✅ Google Maps API loaded successfully')
+      }
       resolve()
     }
 
     script.onerror = () => {
-      console.error('❌ Failed to load Google Maps API')
+      if (process.env.NODE_ENV === 'development') {
+        console.error('❌ Failed to load Google Maps API')
+      }
       loadPromise = null // Reset on error so retry is possible
       reject(new Error('Failed to load Google Maps'))
     }

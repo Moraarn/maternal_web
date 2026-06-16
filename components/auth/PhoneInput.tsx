@@ -12,9 +12,29 @@ interface PhoneInputProps {
 
 export default function PhoneInput({ value, onChange, placeholder }: PhoneInputProps) {
   const [country, setCountry] = useState<string>('ke')
+  const [error, setError] = useState<string | null>(null)
+
+  const validatePhone = (phone: string): boolean => {
+    // Remove all non-digit characters for validation
+    const digitsOnly = phone.replace(/\D/g, '')
+    // Allow reasonable phone length (10-15 digits for international numbers)
+    return digitsOnly.length >= 10 && digitsOnly.length <= 15
+  }
 
   const handleChange = (phone: string) => {
+    // Limit total length to prevent infinite input
+    if (phone.length > 20) {
+      return
+    }
+    
     onChange(phone)
+    
+    // Validate and show error if invalid
+    if (phone && !validatePhone(phone)) {
+      setError('Please enter a valid phone number (10-15 digits)')
+    } else {
+      setError(null)
+    }
   }
 
   return (
@@ -29,13 +49,19 @@ export default function PhoneInput({ value, onChange, placeholder }: PhoneInputP
         disableDropdown={false}
         countryCodeEditable={false}
         inputProps={{
+          maxLength: 20,
           style: {
             backgroundColor: 'var(--color-surface)',
             color: 'var(--color-text-primary)',
-            borderColor: 'var(--color-border)',
+            borderColor: error ? 'var(--color-danger)' : 'var(--color-border)',
           }
         }}
       />
+      {error && (
+        <p className="text-sm mt-1" style={{ color: 'var(--color-danger)' }}>
+          {error}
+        </p>
+      )}
     </div>
   )
 }

@@ -45,30 +45,37 @@ export default function AuthClient({ initialUser }: any) {
       }}
       showBottomNav={false}
     >
-      <div className="flex flex-col h-full px-4 py-4">
-        {/* Auth Header with logo and toggle buttons */}
-        <AuthHeader
-          activeTab={isLogin ? 'signin' : 'signup'}
-          onSignIn={() => setIsLogin(true)}
-          onCreateAccount={() => setIsLogin(false)}
-        />
-
-        {/* Form Container */}
+      <div className="flex flex-col h-full justify-center px-4 py-4">
+        {/* Single unified auth card */}
         <div
-          className="rounded-2xl p-6 space-y-4"
-          style={{ backgroundColor: 'var(--color-surface)' }}
+          className="max-w-md mx-auto w-full rounded-2xl overflow-hidden"
+          style={{ 
+            backgroundColor: 'white'
+          }}
         >
-          {isLogin ? (
-            <LoginForm
-              onSwitchToSignup={() => setIsLogin(false)}
-              onSuccess={handleSuccess}
+          {/* Auth Header with logo and toggle buttons */}
+          <div className="p-6 pb-4">
+            <AuthHeader
+              activeTab={isLogin ? 'signin' : 'signup'}
+              onSignIn={() => setIsLogin(true)}
+              onCreateAccount={() => setIsLogin(false)}
             />
-          ) : (
-            <SignupStepper
-              onSwitchToLogin={() => setIsLogin(true)}
-              onSuccess={handleSuccess}
-            />
-          )}
+          </div>
+
+          {/* Form Container */}
+          <div className="px-6 pb-6 space-y-4">
+            {isLogin ? (
+              <LoginForm
+                onSwitchToSignup={() => setIsLogin(false)}
+                onSuccess={handleSuccess}
+              />
+            ) : (
+              <SignupStepper
+                onSwitchToLogin={() => setIsLogin(true)}
+                onSuccess={handleSuccess}
+              />
+            )}
+          </div>
         </div>
       </div>
     </AppShell>
