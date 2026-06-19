@@ -84,12 +84,17 @@ export function useAuth() {
     try {
       const response = await clientApi.post('/auth/register', data)
 
-      localStorage.setItem('currentUser', JSON.stringify(response.user))
-      if (response.accessToken) {
-        localStorage.setItem('accessToken', response.accessToken)
+      const user = response.user
+      const token = response.accessToken
+
+      if (!user || !token) {
+        throw new Error('Invalid signup response (missing user/token)')
       }
 
-      return { success: true, user: response.user }
+      localStorage.setItem('currentUser', JSON.stringify(user))
+      localStorage.setItem('accessToken', token)
+
+      return { success: true, user, token }
     } catch (err: any) {
       console.error('❌ SIGNUP ERROR:', err)
       
