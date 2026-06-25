@@ -54,9 +54,6 @@ export default function CheckPageClient() {
           return
         }
 
-        // Store in localStorage for other components that might need it
-        localStorage.setItem('currentUser', JSON.stringify(currentUser))
-
         setUser(currentUser)
 
         const loadedQuestions = await getQuestions(
