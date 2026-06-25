@@ -1,5 +1,5 @@
 import { cookies } from 'next/headers';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { AUTH_COOKIE_NAME, getBackendApiUrl } from '@/lib/auth';
 
 type RouteParams = {
@@ -8,7 +8,7 @@ type RouteParams = {
   };
 };
 
-export async function POST(req: NextRequest, { params }: RouteParams) {
+export async function POST(req: Request, { params }: RouteParams) {
   try {
     const cookieStore = await cookies();
     const token = cookieStore.get(AUTH_COOKIE_NAME)?.value;
@@ -25,6 +25,41 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
     const body = await req.json();
 
+    const rawAnswerIndex =
+      body?.answerIndex ??
+      body?.questionIndex ??
+      body?.index;
+
+    const answerIndex = Number(rawAnswerIndex);
+    const answer = body?.answer;
+
+    if (!Number.isInteger(answerIndex) || answerIndex < 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: 'Invalid answerIndex',
+          receivedBody: body,
+        },
+        { status: 400 },
+      );
+    }
+
+    if (typeof answer !== 'boolean') {
+      return NextResponse.json(
+        {
+          success: false,
+          message: 'Invalid answer. Expected boolean.',
+          receivedBody: body,
+        },
+        { status: 400 },
+      );
+    }
+
+    const backendBody = {
+      answerIndex,
+      answer,
+    };
+
     const backendUrl = `${getBackendApiUrl()}/api/v1/check/session/${encodeURIComponent(
       params.sessionId,
     )}/answer`;
@@ -36,7 +71,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
         'Content-Type': 'application/json',
         Accept: 'application/json',
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify(backendBody),
       cache: 'no-store',
     });
 
@@ -56,7 +91,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
           message: data?.message ?? 'Failed to save answer',
           backendStatus: backendRes.status,
           backendUrl,
-          sentBody: body,
+          sentBody: backendBody,
           backendError: data,
         },
         { status: backendRes.status },
@@ -65,7 +100,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
     return NextResponse.json({
       success: true,
-      answer: data?.answer ?? data?.data ?? data,
+      session: data?.session ?? data?.data ?? data,
       raw: data,
     });
   } catch (error) {

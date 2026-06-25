@@ -56,13 +56,16 @@ async function updateSessionAnswer(sessionId: string, answerIndex: number, answe
   const res = await fetch(`/api/check/session/${encodeURIComponent(sessionId)}/answer`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ answerIndex, answer }),
-    cache: 'no-store',
+    body: JSON.stringify({
+      answerIndex,
+      answer,
+    }),
   });
 
   const data = await res.json().catch(() => null);
 
   if (!res.ok) {
+    console.error('[check] answer save failed:', data);
     throw new Error(data?.message ?? 'Failed to save answer');
   }
 
@@ -70,7 +73,7 @@ async function updateSessionAnswer(sessionId: string, answerIndex: number, answe
 }
 
 async function completeCheckSession(sessionId: string, userId: string, userStatus: string) {
-  const res = await fetch(`/api/check/session/${sessionId}/complete`, {
+  const res = await fetch(`/api/check/session/${encodeURIComponent(sessionId)}/complete`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ userId, userStatus }),
@@ -80,10 +83,17 @@ async function completeCheckSession(sessionId: string, userId: string, userStatu
   const data = await res.json().catch(() => null);
 
   if (!res.ok) {
+    console.error('[check] complete session failed:', data);
     throw new Error(data?.message ?? 'Failed to complete session');
   }
 
-  return data;
+  const result =
+    data?.result ??
+    data?.data ??
+    data?.checkResult ??
+    data;
+
+  return result;
 }
 
 function normalizeBackendUserStatus(user: any): string | null {
