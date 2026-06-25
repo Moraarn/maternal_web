@@ -16,7 +16,13 @@ export async function POST(req: Request) {
   const data = await backendRes.json().catch(() => null);
 
   if (!backendRes.ok) {
-    return NextResponse.json(data ?? { message: 'Registration failed' }, { status: backendRes.status });
+    return NextResponse.json(
+      {
+        success: false,
+        message: data?.message ?? 'Registration failed',
+      },
+      { status: backendRes.status },
+    );
   }
 
   const accessToken = data?.accessToken ?? data?.access_token ?? data?.token;
@@ -25,6 +31,8 @@ export async function POST(req: Request) {
   const res = NextResponse.json({
     success: true,
     user: data?.user ?? null,
+    requiresVerification: data?.requiresVerification ?? false,
+    nextStep: data?.nextStep,
   });
 
   if (accessToken) {

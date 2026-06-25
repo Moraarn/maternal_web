@@ -37,6 +37,46 @@ export default function SignupStepper({
     setFormData((prev) => ({ ...prev, ...updates }))
   }
 
+  async function submitRegistration(payload: unknown): Promise<{
+    success: boolean;
+    message?: string;
+    user?: unknown;
+    requiresVerification?: boolean;
+    nextStep?: string;
+  }> {
+    try {
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json().catch(() => null);
+
+      if (!res.ok) {
+        return {
+          success: false,
+          message: data?.message ?? 'Registration failed',
+        };
+      }
+
+      return {
+        success: true,
+        message: data?.message,
+        user: data?.user ?? null,
+        requiresVerification: data?.requiresVerification,
+        nextStep: data?.nextStep,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Registration failed',
+      };
+    }
+  }
+
   const handleSubmit = async () => {
     if (isSubmitted || isLoading) return
 
@@ -44,42 +84,25 @@ export default function SignupStepper({
     setIsSubmitted(true)
     setError(null)
 
-    try {
-      const res = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      })
+    const result = await submitRegistration(formData)
 
-      const data = await res.json().catch(() => null)
-
-      if (!res.ok) {
-        setError(data?.message ?? 'Registration failed')
-        setIsLoading(false)
-        setIsSubmitted(false)
-        return
-      }
-
-      if (data?.nextStep || data?.requiresVerification) {
-        // Preserve existing OTP/verification flow if this app already has one.
-        // Do not force redirect if backend says verification is needed.
-        setIsLoading(false)
-        setIsSubmitted(false)
-        return
-      }
-
-      onSuccess()
-      router.replace('/home')
-      router.refresh()
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : 'An unexpected error occurred'
-      )
+    if (!result.success) {
+      setError(result.message ?? 'Registration failed')
       setIsLoading(false)
       setIsSubmitted(false)
+      return
     }
+
+    if (result.requiresVerification || result.nextStep) {
+      // Preserve existing verification flow if present.
+      setIsLoading(false)
+      setIsSubmitted(false)
+      return
+    }
+
+    onSuccess()
+    router.replace('/home')
+    router.refresh()
   }
 
   const nextStep = () => {
