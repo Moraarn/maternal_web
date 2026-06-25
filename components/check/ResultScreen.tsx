@@ -2,7 +2,22 @@ import { Mic, CheckCircle2, AlertCircle, MapPin } from 'lucide-react'
 import RiskResultComponent from './RiskResult'
 import HospitalList from './HospitalListDebug'
 import Button from '@/components/ui/Button'
-import { CheckResult } from '@/app/check/actions'
+
+type CheckResult = {
+  id: string
+  userId: string
+  answers: boolean[]
+  riskLevel: 'low' | 'medium' | 'high'
+  riskFactors: string[]
+  recommendations: string[]
+  date: string
+  questions: any[]
+  riskResults?: any[]
+  smsAlertStatus?: {
+    chwSent?: boolean
+    emergencySent?: boolean
+  }
+}
 
 interface ResultScreenProps {
   riskResult: CheckResult | null

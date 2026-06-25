@@ -13,13 +13,76 @@ import ResultScreen from './ResultScreen'
 import Button from '@/components/ui/Button'
 import { fetchCurrentUser } from '@/lib/auth'
 import type { User } from '@/store/useStore'
-import {
-  createCheckSession,
-  updateSessionAnswer,
-  completeCheckSession,
-  Question,
-  CheckResult,
-} from '@/app/check/actions'
+
+type Question = {
+  id: string
+  text: string
+  swahiliText?: string
+  category?: string
+}
+
+type CheckResult = {
+  id: string
+  userId: string
+  answers: boolean[]
+  riskLevel: 'low' | 'medium' | 'high'
+  riskFactors: string[]
+  recommendations: string[]
+  date: string
+  questions: Question[]
+  riskResults?: any[]
+}
+
+async function createCheckSession(userId: string) {
+  const res = await fetch('/api/check/session', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId }),
+    cache: 'no-store',
+  });
+
+  const data = await res.json().catch(() => null);
+
+  if (!res.ok) {
+    throw new Error(data?.message ?? 'Failed to create session');
+  }
+
+  return data;
+}
+
+async function updateSessionAnswer(sessionId: string, questionIndex: number, answer: boolean) {
+  const res = await fetch(`/api/check/session/${sessionId}/answer`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ questionIndex, answer }),
+    cache: 'no-store',
+  });
+
+  const data = await res.json().catch(() => null);
+
+  if (!res.ok) {
+    throw new Error(data?.message ?? 'Failed to save answer');
+  }
+
+  return data;
+}
+
+async function completeCheckSession(sessionId: string, userId: string, userStatus: string) {
+  const res = await fetch(`/api/check/session/${sessionId}/complete`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId, userStatus }),
+    cache: 'no-store',
+  });
+
+  const data = await res.json().catch(() => null);
+
+  if (!res.ok) {
+    throw new Error(data?.message ?? 'Failed to complete session');
+  }
+
+  return data;
+}
 
 function normalizeBackendUserStatus(user: any): string | null {
   const rawStatus =
@@ -67,10 +130,6 @@ function normalizeBackendTrimester(user: any): string | undefined {
   };
 
   return map[trimester] ?? trimester;
-}
-
-function normalizeSession(data: any) {
-  return data?.body ?? data?.data ?? data?.session ?? data;
 }
 
 async function loadQuestions(userStatus: string, trimester?: string): Promise<Question[]> {
@@ -187,14 +246,19 @@ export default function CheckPageClient() {
 
         setQuestions(loadedQuestions)
 
-        const session = await createCheckSession(currentUser.id)
-        console.log('[check] created session:', session)
+        const sessionResponse = await createCheckSession(currentUser.id)
+        console.log('[check] created session response:', sessionResponse)
 
-        const normalizedSession = normalizeSession(session)
-        const createdSessionId = normalizedSession?.id ?? normalizedSession?._id ?? null
+        const createdSessionId =
+          sessionResponse?.sessionId ??
+          sessionResponse?.session?.id ??
+          sessionResponse?.session?._id ??
+          sessionResponse?.id ??
+          sessionResponse?._id ??
+          null;
 
         if (!createdSessionId) {
-          console.warn('[check] No session id returned. Continuing check locally.', session)
+          console.warn('[check] No session id returned. Continuing check locally.', sessionResponse)
         } else {
           setSessionId(createdSessionId)
         }
@@ -240,11 +304,11 @@ export default function CheckPageClient() {
     }
 
     if (!sessionId) {
-      const localResult = {
+      const localResult: CheckResult = {
         id: 'local',
         userId: user.id,
         answers: newAnswers,
-        riskLevel: 'low',
+        riskLevel: 'low' as const,
         riskFactors: [],
         recommendations: ['Continue routine care — everything looks good'],
         date: new Date().toISOString(),

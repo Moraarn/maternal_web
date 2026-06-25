@@ -2,6 +2,10 @@ import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 import { AUTH_COOKIE_NAME, getBackendApiUrl } from '@/lib/auth';
 
+function normalizeSession(data: any) {
+  return data?.session ?? data?.body ?? data?.data ?? data;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const cookieStore = await cookies();
@@ -9,7 +13,7 @@ export async function POST(req: NextRequest) {
 
     if (!token) {
       return NextResponse.json(
-        { success: false, message: 'Unauthorized' },
+        { success: false, session: null, message: 'Unauthorized' },
         { status: 401 },
       );
     }
@@ -27,25 +31,24 @@ export async function POST(req: NextRequest) {
       cache: 'no-store',
     });
 
-    const text = await backendRes.text();
-
-    let data: any = null;
-    try {
-      data = text ? JSON.parse(text) : null;
-    } catch {
-      data = { message: text };
-    }
-
-    console.log('[check/session] backend status:', backendRes.status);
-    console.log('[check/session] backend response:', data);
-
-    return NextResponse.json(data, { status: backendRes.status });
-  } catch (error) {
-    console.error('[check/session] route failed:', error);
+    const data = await backendRes.json().catch(() => null);
+    const session = normalizeSession(data);
 
     return NextResponse.json(
       {
+        success: backendRes.ok,
+        session,
+        sessionId: session?.id ?? session?._id ?? data?.sessionId ?? null,
+        backendError: backendRes.ok ? undefined : data,
+      },
+      { status: backendRes.status },
+    );
+  } catch (error) {
+    return NextResponse.json(
+      {
         success: false,
+        session: null,
+        sessionId: null,
         message: error instanceof Error ? error.message : 'Failed to create session',
       },
       { status: 500 },

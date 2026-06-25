@@ -1,4 +1,14 @@
-import { Question } from '@/app/check/actions'
+type Question = {
+  id: string
+  text: string
+  text_sw?: string
+  swahiliText?: string
+  category?: string
+  tag?: string
+  hint?: string
+  hint_sw?: string
+  userStatus?: string
+}
 
 interface QuestionCardProps {
   question: Question
