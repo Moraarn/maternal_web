@@ -15,14 +15,21 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
     if (!token) {
       return NextResponse.json(
-        { success: false, message: 'Unauthorized' },
+        {
+          success: false,
+          message: 'Unauthorized',
+        },
         { status: 401 },
       );
     }
 
     const body = await req.json();
 
-    const backendRes = await fetch(`${getBackendApiUrl()}/api/v1/check/session/${params.sessionId}/answer`, {
+    const backendUrl = `${getBackendApiUrl()}/api/v1/check/session/${encodeURIComponent(
+      params.sessionId,
+    )}/answer`;
+
+    const backendRes = await fetch(backendUrl, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -42,17 +49,30 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       data = { message: text };
     }
 
-    console.log('[check/session/answer] backend status:', backendRes.status);
-    console.log('[check/session/answer] backend response:', data);
+    if (!backendRes.ok) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: data?.message ?? 'Failed to save answer',
+          backendStatus: backendRes.status,
+          backendUrl,
+          sentBody: body,
+          backendError: data,
+        },
+        { status: backendRes.status },
+      );
+    }
 
-    return NextResponse.json(data, { status: backendRes.status });
+    return NextResponse.json({
+      success: true,
+      answer: data?.answer ?? data?.data ?? data,
+      raw: data,
+    });
   } catch (error) {
-    console.error('[check/session/answer] route failed:', error);
-
     return NextResponse.json(
       {
         success: false,
-        message: error instanceof Error ? error.message : 'Failed to update session',
+        message: error instanceof Error ? error.message : 'Internal server error',
       },
       { status: 500 },
     );

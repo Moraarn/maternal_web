@@ -19,6 +19,8 @@ type Question = {
   text: string
   swahiliText?: string
   category?: string
+  tag?: string
+  hint?: string
 }
 
 type CheckResult = {
@@ -50,11 +52,11 @@ async function createCheckSession(userId: string) {
   return data;
 }
 
-async function updateSessionAnswer(sessionId: string, questionIndex: number, answer: boolean) {
-  const res = await fetch(`/api/check/session/${sessionId}/answer`, {
+async function updateSessionAnswer(sessionId: string, answerIndex: number, answer: boolean) {
+  const res = await fetch(`/api/check/session/${encodeURIComponent(sessionId)}/answer`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ questionIndex, answer }),
+    body: JSON.stringify({ answerIndex, answer }),
     cache: 'no-store',
   });
 
@@ -130,6 +132,75 @@ function normalizeBackendTrimester(user: any): string | undefined {
   };
 
   return map[trimester] ?? trimester;
+}
+
+function calculateLocalRisk(questions: Question[], answers: boolean[]) {
+  const yesAnswers = questions.filter((question, index) => answers[index] === true);
+
+  const highRiskTags = [
+    'hemorrhage',
+    'bleeding',
+    'eclampsia',
+    'seizure',
+    'ectopic',
+    'miscarriage',
+    'infection',
+    'fever',
+    'breathing',
+    'chest',
+    'severe pain',
+    'danger',
+  ];
+
+  const mediumRiskTags = [
+    'vomiting',
+    'urinary',
+    'headache',
+    'swelling',
+    'dizziness',
+    'reduced movement',
+    'mental health',
+  ];
+
+  const hasHighRisk = yesAnswers.some((question) => {
+    const text = `${question.tag ?? ''} ${question.text ?? ''} ${question.hint ?? ''}`.toLowerCase();
+    return highRiskTags.some((tag) => text.includes(tag));
+  });
+
+  const hasMediumRisk = yesAnswers.some((question) => {
+    const text = `${question.tag ?? ''} ${question.text ?? ''} ${question.hint ?? ''}`.toLowerCase();
+    return mediumRiskTags.some((tag) => text.includes(tag));
+  });
+
+  if (hasHighRisk) {
+    return {
+      riskLevel: 'high' as const,
+      riskFactors: yesAnswers.map((question) => question.tag || question.text),
+      recommendations: [
+        'Seek urgent medical care now.',
+        'Contact your health worker or nearest hospital immediately.',
+      ],
+    };
+  }
+
+  if (hasMediumRisk || yesAnswers.length >= 2) {
+    return {
+      riskLevel: 'medium' as const,
+      riskFactors: yesAnswers.map((question) => question.tag || question.text),
+      recommendations: [
+        'Contact your health worker for advice.',
+        'Monitor symptoms closely and seek care if they worsen.',
+      ],
+    };
+  }
+
+  return {
+    riskLevel: 'low' as const,
+    riskFactors: [],
+    recommendations: [
+      'No danger signs detected. Continue routine care.',
+    ],
+  };
 }
 
 async function loadQuestions(userStatus: string, trimester?: string): Promise<Question[]> {
@@ -304,13 +375,15 @@ export default function CheckPageClient() {
     }
 
     if (!sessionId) {
+      const localRisk = calculateLocalRisk(questions, newAnswers);
+
       const localResult: CheckResult = {
         id: 'local',
         userId: user.id,
         answers: newAnswers,
-        riskLevel: 'low' as const,
-        riskFactors: [],
-        recommendations: ['Continue routine care — everything looks good'],
+        riskLevel: localRisk.riskLevel,
+        riskFactors: localRisk.riskFactors,
+        recommendations: localRisk.recommendations,
         date: new Date().toISOString(),
         questions,
         riskResults: [],
