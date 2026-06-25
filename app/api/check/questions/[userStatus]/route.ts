@@ -68,15 +68,12 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 
     const text = await backendRes.text();
 
-    let data: any = null;
+    let data: unknown = null;
     try {
       data = text ? JSON.parse(text) : null;
     } catch {
       data = { message: text };
     }
-
-    console.log('[check/questions] backend status:', backendRes.status);
-    console.log('[check/questions] backend response:', data);
 
     const questions = normalizeQuestions(data);
 
@@ -88,14 +85,13 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
           requestedUserStatus: params.userStatus,
           requestedTrimester: trimester,
           backendUrl: backendUrl.toString(),
+          backendStatus: backendRes.status,
           raw: data,
         },
       },
       { status: backendRes.status },
     );
   } catch (error) {
-    console.error('[check/questions] route failed:', error);
-
     return NextResponse.json(
       {
         success: false,
