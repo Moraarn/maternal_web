@@ -32,6 +32,10 @@ function extractRefreshToken(data: any): string | null {
   );
 }
 
+function extractUser(data: any): unknown {
+  return data?.user ?? data?.body?.user ?? data?.data?.user ?? null;
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -73,12 +77,14 @@ export async function POST(req: Request) {
 
     const accessToken = extractAccessToken(data);
     const refreshToken = extractRefreshToken(data);
+    const user = extractUser(data);
 
     if (!accessToken) {
       return NextResponse.json(
         {
           success: false,
-          message: 'Registration succeeded but no access token was returned by the backend.',
+          message: 'Auth succeeded but backend did not return an access token.',
+          backendResponse: data,
         },
         { status: 502 },
       );
@@ -86,7 +92,7 @@ export async function POST(req: Request) {
 
     const res = NextResponse.json({
       success: true,
-      user: data?.user ?? null,
+      user,
       requiresVerification: data?.requiresVerification ?? false,
       nextStep: data?.nextStep,
     });
