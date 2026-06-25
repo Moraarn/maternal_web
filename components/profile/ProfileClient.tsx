@@ -144,7 +144,7 @@ export default function ProfileClient() {
   };
 
   const handleSaveProfile = async (updatedUser: any) => {
-    console.log('Saving profile locally:', updatedUser);
+    console.warn('[profile] Backend update route not implemented yet. Updating local UI only.');
     setUser(updatedUser);
   }
 
