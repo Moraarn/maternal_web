@@ -1,6 +1,25 @@
 import { clientApi } from '@/lib/clientApi'
 import type { User } from '@/store/useStore'
 
+export const AUTH_COOKIE_NAME = 'access_token';
+export const REFRESH_COOKIE_NAME = 'refresh_token';
+
+export const authCookieOptions = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'lax' as const,
+  path: '/',
+  maxAge: 60 * 60 * 24 * 7,
+};
+
+export function getBackendApiUrl() {
+  const url = process.env.BACKEND_API_URL;
+  if (!url) {
+    throw new Error('BACKEND_API_URL is not configured');
+  }
+  return url.replace(/\/$/, '');
+}
+
 export async function fetchCurrentUser(): Promise<User | null> {
   try {
     const response = await clientApi.get('/auth/me')
@@ -24,7 +43,7 @@ export async function getServerToken(): Promise<string | null> {
   try {
     const { cookies } = await import('next/headers')
     const cookieStore = cookies()
-    return cookieStore.get('token')?.value || null
+    return cookieStore.get(AUTH_COOKIE_NAME)?.value || null
   } catch {
     return null
   }

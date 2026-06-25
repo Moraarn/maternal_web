@@ -1,52 +1,31 @@
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
+import { NextResponse, type NextRequest } from 'next/server';
+import { AUTH_COOKIE_NAME } from '@/lib/auth';
 
-export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl
+const protectedRoutes = ['/home', '/profile', '/check', '/talk'];
+const authRoutes = ['/auth'];
 
-  // Public routes that don't require authentication
-  const publicRoutes = ['/auth', '/api/auth/login', '/api/auth/register', '/api/auth/otp/create', '/api/auth/otp/verify']
+export function middleware(req: NextRequest) {
+  const { pathname } = req.nextUrl;
+  const token = req.cookies.get(AUTH_COOKIE_NAME)?.value;
 
-  // Check if the current path is public
-  const isPublicRoute = publicRoutes.some(route =>
-    pathname === route || pathname.startsWith(route)
-  )
+  const isProtected = protectedRoutes.some((route) => pathname.startsWith(route));
+  const isAuth = authRoutes.some((route) => pathname.startsWith(route));
 
-  // If it's a public route, allow access
-  if (isPublicRoute) {
-    // If user is authenticated and trying to access /auth, redirect to home
-    const token = request.cookies.get('access_token')?.value
-    if (pathname === '/auth' && token) {
-      const url = request.nextUrl.clone()
-      url.pathname = '/home'
-      return NextResponse.redirect(url)
-    }
-    return NextResponse.next()
+  if (isProtected && !token) {
+    const url = req.nextUrl.clone();
+    url.pathname = '/auth';
+    return NextResponse.redirect(url);
   }
 
-  // For protected routes, check for authentication via cookies
-  const token = request.cookies.get('access_token')?.value
-
-  if (!token) {
-    // Redirect to auth page if not authenticated
-    const url = request.nextUrl.clone()
-    url.pathname = '/auth'
-    return NextResponse.redirect(url)
+  if (isAuth && token) {
+    const url = req.nextUrl.clone();
+    url.pathname = '/home';
+    return NextResponse.redirect(url);
   }
 
-  // Allow access to protected routes if authenticated
-  return NextResponse.next()
+  return NextResponse.next();
 }
 
 export const config = {
-  matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder
-     */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
-  ],
-}
+  matcher: ['/home/:path*', '/profile/:path*', '/check/:path*', '/talk/:path*', '/auth/:path*'],
+};

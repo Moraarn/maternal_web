@@ -1,19 +1,20 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { useAuth } from '@/hooks/useAuth'
+import { useRouter } from 'next/navigation'
 import ProgressDots from './ProgressDots'
 import PersonalDetailsStep from './PersonalDetailsStep'
 import HealthStatusStep from './HealthStatusStep'
 import CareTeamStep from './CareTeamStep'
 import FormNavigation from './FormNavigation'
 import { RegisterData, SignupStepperProps } from '../../lib/types'
+import { registerAction } from '@/app/auth/actions'
 
 export default function SignupStepper({
   onSwitchToLogin,
   onSuccess,
 }: SignupStepperProps) {
-  const { signup, clearError } = useAuth()
+  const router = useRouter()
 
   const [currentStep, setCurrentStep] = useState(1)
   const [isLoading, setIsLoading] = useState(false)
@@ -43,17 +44,18 @@ export default function SignupStepper({
     setIsLoading(true)
     setIsSubmitted(true)
     setError(null)
-    clearError()
 
     try {
-      const result = await signup(formData)
+      const result = await registerAction(formData)
 
       if (result.success) {
         onSuccess()
+        router.replace('/home')
+        router.refresh()
         return
       }
 
-      setError(result.error || 'Registration failed')
+      setError(result.message || 'Registration failed')
       setIsLoading(false)
       setIsSubmitted(false)
     } catch (err) {

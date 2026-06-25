@@ -3,9 +3,9 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Button from '@/components/ui/Button'
-import { useAuth } from '@/hooks/useAuth'
 import PhoneInput from './PhoneInput'
 import PasswordInput from './PasswordInput'
+import { loginAction } from '@/app/auth/actions'
 
 interface LoginFormProps {
   onSwitchToSignup: () => void
@@ -16,8 +16,8 @@ export default function LoginForm({ onSwitchToSignup, onSuccess }: LoginFormProp
   const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
-  const { login, isLoading: authLoading, error: authError, clearError } = useAuth()
 
   const validatePhone = (value: string): boolean => {
     // Remove all non-digit characters for validation
@@ -33,7 +33,6 @@ export default function LoginForm({ onSwitchToSignup, onSuccess }: LoginFormProp
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
-    clearError()
 
     // Validate phone before submission
     if (!validatePhone(phone)) {
@@ -41,13 +40,18 @@ export default function LoginForm({ onSwitchToSignup, onSuccess }: LoginFormProp
       return
     }
 
-    const result = await login({ phone, password })
+    setIsLoading(true)
+
+    const result = await loginAction({ phone, password })
+
+    setIsLoading(false)
 
     if (result.success) {
       onSuccess()
-      router.push('/home')
+      router.replace('/home')
+      router.refresh()
     } else {
-      setError(result.error || 'Login failed')
+      setError(result.message || 'Login failed')
     }
   }
 
@@ -73,7 +77,7 @@ export default function LoginForm({ onSwitchToSignup, onSuccess }: LoginFormProp
           onChange={setPassword}
           placeholder="Enter your password"
           required
-          disabled={authLoading}
+          disabled={isLoading}
         />
       </div>
 
@@ -96,9 +100,9 @@ export default function LoginForm({ onSwitchToSignup, onSuccess }: LoginFormProp
       <Button
         type="submit"
         fullWidth
-        disabled={authLoading || !phone.trim() || !password.trim()}
+        disabled={isLoading || !phone.trim() || !password.trim()}
       >
-        {authLoading ? 'Signing in...' : 'Sign in'}
+        {isLoading ? 'Signing in...' : 'Sign in'}
       </Button>
 
       <div className="relative">
@@ -115,7 +119,7 @@ export default function LoginForm({ onSwitchToSignup, onSuccess }: LoginFormProp
         variant="outline"
         fullWidth
         onClick={onSwitchToSignup}
-        disabled={authLoading}
+        disabled={isLoading}
       >
         Create new account
       </Button>
