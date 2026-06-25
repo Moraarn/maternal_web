@@ -4,9 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTheme } from '@/contexts/ThemeContext'
 import { useLanguage } from '@/contexts/LanguageContext'
-import { getUserProfile, UserProfile } from '@/app/profile/actions'
 import { fetchCurrentUser } from '@/lib/auth'
-import { logout } from '@/app/auth/actions'
 import AppShell from '@/components/ui/AppShell'
 import HeroSection from '@/components/profile/HeroSection'
 import CheckupCard from '@/components/profile/CheckupCard'
@@ -17,6 +15,33 @@ import ActionButtons from '@/components/profile/ActionButtons'
 import LogoutSheet from '@/components/profile/LogoutSheet'
 import EditProfileModal from '@/components/profile/EditProfileModal'
 import SettingsModal from '@/components/profile/SettingsModal'
+
+type UserProfile = {
+  userId: string
+  totalChecks: number
+  riskStats: {
+    high: number
+    medium: number
+    low: number
+  }
+  lastCheckResult: any
+  checkHistory: any[]
+}
+
+async function fetchUserProfile(): Promise<UserProfile> {
+  const res = await fetch('/api/profile/me', {
+    method: 'GET',
+    cache: 'no-store',
+  });
+
+  const data = await res.json().catch(() => null);
+
+  if (!res.ok) {
+    throw new Error(data?.message ?? 'Failed to load profile');
+  }
+
+  return data?.profile;
+}
 
 export default function ProfileClient() {
   const router = useRouter()
@@ -44,7 +69,7 @@ export default function ProfileClient() {
         }
         setUser(currentUser)
 
-        const profile = await getUserProfile()
+        const profile = await fetchUserProfile()
         console.log('📊 [ProfileClient] Profile data received:', {
           profile,
           hasCheckHistory: !!profile.checkHistory,
@@ -108,28 +133,19 @@ export default function ProfileClient() {
 
   const handleLogout = async () => {
     try {
-      // Call server action to clear HttpOnly cookies
-      await logout()
-      
-      // Call backend logout endpoint
-      await fetch('http://localhost:5000/auth/logout', { method: 'POST', credentials: 'include' })
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+      });
     } catch (error) {
-      console.error('Logout error:', error)
+      console.error('Logout error:', error);
     }
 
-    // Clear localStorage
-    localStorage.removeItem('accessToken')
-    localStorage.removeItem('currentUser')
-    localStorage.removeItem('token')
-
-    // Force redirect to auth page
-    window.location.href = '/auth'
-  }
+    window.location.href = '/auth';
+  };
 
   const handleSaveProfile = async (updatedUser: any) => {
-    // TODO: Save to backend API
-    console.log('Saving profile:', updatedUser)
-    setUser(updatedUser)
+    console.log('Saving profile locally:', updatedUser);
+    setUser(updatedUser);
   }
 
   const riskStyle = (level: string) => {
