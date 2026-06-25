@@ -5,6 +5,10 @@ const protectedRoutes = ['/home', '/profile', '/check', '/talk'];
 const authRoutes = ['/auth'];
 
 export function middleware(req: NextRequest) {
+  if (req.nextUrl.pathname.startsWith('/api/auth')) {
+    return NextResponse.next();
+  }
+
   const { pathname } = req.nextUrl;
   const token = req.cookies.get(AUTH_COOKIE_NAME)?.value;
 
