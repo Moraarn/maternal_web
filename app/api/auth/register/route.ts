@@ -2,9 +2,35 @@ import { NextResponse } from 'next/server';
 import {
   AUTH_COOKIE_NAME,
   REFRESH_COOKIE_NAME,
-  authCookieOptions,
+  accessCookieOptions,
+  refreshCookieOptions,
   getBackendApiUrl,
 } from '@/lib/auth';
+
+function extractAccessToken(data: any): string | null {
+  return (
+    data?.accessToken ??
+    data?.access_token ??
+    data?.token ??
+    data?.body?.accessToken ??
+    data?.body?.access_token ??
+    data?.data?.accessToken ??
+    data?.data?.access_token ??
+    null
+  );
+}
+
+function extractRefreshToken(data: any): string | null {
+  return (
+    data?.refreshToken ??
+    data?.refresh_token ??
+    data?.body?.refreshToken ??
+    data?.body?.refresh_token ??
+    data?.data?.refreshToken ??
+    data?.data?.refresh_token ??
+    null
+  );
+}
 
 export async function POST(req: Request) {
   try {
@@ -45,8 +71,18 @@ export async function POST(req: Request) {
       );
     }
 
-    const accessToken = data?.accessToken ?? data?.access_token ?? data?.token;
-    const refreshToken = data?.refreshToken ?? data?.refresh_token;
+    const accessToken = extractAccessToken(data);
+    const refreshToken = extractRefreshToken(data);
+
+    if (!accessToken) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: 'Registration succeeded but no access token was returned by the backend.',
+        },
+        { status: 502 },
+      );
+    }
 
     const res = NextResponse.json({
       success: true,
@@ -55,15 +91,10 @@ export async function POST(req: Request) {
       nextStep: data?.nextStep,
     });
 
-    if (accessToken) {
-      res.cookies.set(AUTH_COOKIE_NAME, accessToken, authCookieOptions);
-    }
+    res.cookies.set(AUTH_COOKIE_NAME, accessToken, accessCookieOptions);
 
     if (refreshToken) {
-      res.cookies.set(REFRESH_COOKIE_NAME, refreshToken, {
-        ...authCookieOptions,
-        maxAge: 60 * 60 * 24 * 30,
-      });
+      res.cookies.set(REFRESH_COOKIE_NAME, refreshToken, refreshCookieOptions);
     }
 
     return res;

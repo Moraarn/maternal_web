@@ -3,13 +3,23 @@ import type { User } from '@/store/useStore'
 export const AUTH_COOKIE_NAME = 'access_token';
 export const REFRESH_COOKIE_NAME = 'refresh_token';
 
-export const authCookieOptions = {
+export const accessCookieOptions = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'lax' as const,
+  path: '/',
+  maxAge: 15 * 60,
+};
+
+export const refreshCookieOptions = {
   httpOnly: true,
   secure: process.env.NODE_ENV === 'production',
   sameSite: 'lax' as const,
   path: '/',
   maxAge: 60 * 60 * 24 * 7,
 };
+
+export const authCookieOptions = accessCookieOptions;
 
 export function getBackendApiUrl() {
   const url = process.env.BACKEND_API_URL;
