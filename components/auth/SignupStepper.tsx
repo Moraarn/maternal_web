@@ -8,7 +8,6 @@ import HealthStatusStep from './HealthStatusStep'
 import CareTeamStep from './CareTeamStep'
 import FormNavigation from './FormNavigation'
 import { RegisterData, SignupStepperProps } from '../../lib/types'
-import { registerAction } from '@/app/auth/actions'
 
 export default function SignupStepper({
   onSwitchToLogin,
@@ -46,18 +45,34 @@ export default function SignupStepper({
     setError(null)
 
     try {
-      const result = await registerAction(formData)
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      })
 
-      if (result.success) {
-        onSuccess()
-        router.replace('/home')
-        router.refresh()
+      const data = await res.json().catch(() => null)
+
+      if (!res.ok) {
+        setError(data?.message ?? 'Registration failed')
+        setIsLoading(false)
+        setIsSubmitted(false)
         return
       }
 
-      setError(result.message || 'Registration failed')
-      setIsLoading(false)
-      setIsSubmitted(false)
+      if (data?.nextStep || data?.requiresVerification) {
+        // Preserve existing OTP/verification flow if this app already has one.
+        // Do not force redirect if backend says verification is needed.
+        setIsLoading(false)
+        setIsSubmitted(false)
+        return
+      }
+
+      onSuccess()
+      router.replace('/home')
+      router.refresh()
     } catch (err) {
       setError(
         err instanceof Error ? err.message : 'An unexpected error occurred'

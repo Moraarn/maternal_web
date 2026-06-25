@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import Button from '@/components/ui/Button'
 import PhoneInput from './PhoneInput'
 import PasswordInput from './PasswordInput'
-import { loginAction } from '@/app/auth/actions'
 
 interface LoginFormProps {
   onSwitchToSignup: () => void
@@ -42,17 +41,26 @@ export default function LoginForm({ onSwitchToSignup, onSuccess }: LoginFormProp
 
     setIsLoading(true)
 
-    const result = await loginAction({ phone, password })
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ phone, password }),
+    })
+
+    const data = await res.json().catch(() => null)
 
     setIsLoading(false)
 
-    if (result.success) {
-      onSuccess()
-      router.replace('/home')
-      router.refresh()
-    } else {
-      setError(result.message || 'Login failed')
+    if (!res.ok) {
+      setError(data?.message ?? 'Login failed')
+      return
     }
+
+    onSuccess()
+    router.replace('/home')
+    router.refresh()
   }
 
   return (
