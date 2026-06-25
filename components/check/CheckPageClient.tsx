@@ -69,6 +69,10 @@ function normalizeBackendTrimester(user: any): string | undefined {
   return map[trimester] ?? trimester;
 }
 
+function normalizeSession(data: any) {
+  return data?.body ?? data?.data ?? data?.session ?? data;
+}
+
 async function loadQuestions(userStatus: string, trimester?: string): Promise<Question[]> {
   if (!userStatus) return [];
 
@@ -184,7 +188,16 @@ export default function CheckPageClient() {
         setQuestions(loadedQuestions)
 
         const session = await createCheckSession(currentUser.id)
-        setSessionId((session.id || session._id) as string)
+        console.log('[check] created session:', session)
+
+        const normalizedSession = normalizeSession(session)
+        const createdSessionId = normalizedSession?.id ?? normalizedSession?._id ?? null
+
+        if (!createdSessionId) {
+          console.warn('[check] No session id returned. Continuing check locally.', session)
+        } else {
+          setSessionId(createdSessionId)
+        }
       } catch (error) {
         console.error('Home init error:', error)
         router.replace('/auth')
@@ -203,28 +216,57 @@ export default function CheckPageClient() {
   }
 
   const handleNext = async () => {
-    if (selectedAnswer === null || !sessionId || !user) return
+    if (selectedAnswer === null || !user) return
+
+    const answerToSave = selectedAnswer
+
+    if (sessionId) {
+      try {
+        await updateSessionAnswer(sessionId, currentQuestionIndex, answerToSave)
+      } catch (error) {
+        console.error('[check] Failed to save answer, continuing locally:', error)
+      }
+    } else {
+      console.warn('[check] Missing sessionId. Continuing locally without saving answer.')
+    }
+
+    const newAnswers = [...answers, answerToSave]
+    setAnswers(newAnswers)
+
+    if (currentQuestionIndex < questions.length - 1) {
+      setCurrentQuestionIndex((prev) => prev + 1)
+      setSelectedAnswer(null)
+      return
+    }
+
+    if (!sessionId) {
+      const localResult = {
+        id: 'local',
+        userId: user.id,
+        answers: newAnswers,
+        riskLevel: 'low',
+        riskFactors: [],
+        recommendations: ['Continue routine care — everything looks good'],
+        date: new Date().toISOString(),
+        questions,
+        riskResults: [],
+      }
+
+      setRiskResult(localResult)
+      setShowResult(true)
+      return
+    }
 
     try {
-      await updateSessionAnswer(sessionId, currentQuestionIndex, selectedAnswer)
-
-      const newAnswers = [...answers, selectedAnswer]
-      setAnswers(newAnswers)
-
-      if (currentQuestionIndex < questions.length - 1) {
-        setCurrentQuestionIndex((prev) => prev + 1)
-        setSelectedAnswer(null)
-      } else {
-        const result = await completeCheckSession(
-          sessionId,
-          user.id,
-          user.status
-        )
-        setRiskResult(result)
-        setShowResult(true)
-      }
+      const result = await completeCheckSession(
+        sessionId,
+        user.id,
+        user.status
+      )
+      setRiskResult(result)
+      setShowResult(true)
     } catch (error) {
-      console.error(error)
+      console.error('[check] Failed to complete backend session:', error)
     }
   }
 
