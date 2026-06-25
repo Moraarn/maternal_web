@@ -1,0 +1,108 @@
+import { cookies } from 'next/headers';
+import { NextRequest, NextResponse } from 'next/server';
+import { AUTH_COOKIE_NAME, getBackendApiUrl } from '@/lib/auth';
+
+type RouteParams = {
+  params: {
+    userStatus: string;
+  };
+};
+
+function normalizeQuestions(data: unknown): unknown[] {
+  if (Array.isArray(data)) return data;
+
+  if (data && typeof data === 'object') {
+    const value = data as {
+      body?: unknown;
+      data?: unknown;
+      questions?: unknown;
+      result?: unknown;
+    };
+
+    if (Array.isArray(value.body)) return value.body;
+    if (Array.isArray(value.data)) return value.data;
+    if (Array.isArray(value.questions)) return value.questions;
+    if (Array.isArray(value.result)) return value.result;
+
+    if (value.body && typeof value.body === 'object') {
+      const body = value.body as { data?: unknown; questions?: unknown };
+      if (Array.isArray(body.data)) return body.data;
+      if (Array.isArray(body.questions)) return body.questions;
+    }
+  }
+
+  return [];
+}
+
+export async function GET(req: NextRequest, { params }: RouteParams) {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get(AUTH_COOKIE_NAME)?.value;
+
+    if (!token) {
+      return NextResponse.json(
+        { success: false, questions: [], message: 'Unauthorized' },
+        { status: 401 },
+      );
+    }
+
+    const url = new URL(req.url);
+    const trimester = url.searchParams.get('trimester');
+
+    const backendUrl = new URL(
+      `${getBackendApiUrl()}/api/v1/check/questions/${encodeURIComponent(params.userStatus)}`,
+    );
+
+    if (trimester) {
+      backendUrl.searchParams.set('trimester', trimester);
+    }
+
+    const backendRes = await fetch(backendUrl.toString(), {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/json',
+      },
+      cache: 'no-store',
+    });
+
+    const text = await backendRes.text();
+
+    let data: any = null;
+    try {
+      data = text ? JSON.parse(text) : null;
+    } catch {
+      data = { message: text };
+    }
+
+    console.log('[check/questions] backend status:', backendRes.status);
+    console.log('[check/questions] backend response:', data);
+
+    const questions = normalizeQuestions(data);
+
+    return NextResponse.json(
+      {
+        success: backendRes.ok,
+        questions,
+        debug: {
+          requestedUserStatus: params.userStatus,
+          requestedTrimester: trimester,
+          backendUrl: backendUrl.toString(),
+          raw: data,
+        },
+      },
+      { status: backendRes.status },
+    );
+  } catch (error) {
+    console.error('[check/questions] route failed:', error);
+
+    return NextResponse.json(
+      {
+        success: false,
+        questions: [],
+        message: error instanceof Error ? error.message : 'Failed to load questions',
+      },
+      { status: 500 },
+    );
+  }
+}

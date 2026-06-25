@@ -14,13 +14,109 @@ import Button from '@/components/ui/Button'
 import { fetchCurrentUser } from '@/lib/auth'
 import type { User } from '@/store/useStore'
 import {
-  getQuestions,
   createCheckSession,
   updateSessionAnswer,
   completeCheckSession,
   Question,
   CheckResult,
 } from '@/app/check/actions'
+
+function normalizeBackendUserStatus(user: any): string | null {
+  const rawStatus =
+    user?.status ??
+    user?.healthStatus ??
+    user?.userStatus ??
+    user?.pregnancyStatus ??
+    null;
+
+  if (!rawStatus) return null;
+
+  const status = String(rawStatus).toLowerCase();
+
+  if (status === 'pregnant') return 'pregnant';
+  if (status === 'just_gave_birth') return 'just_gave_birth';
+  if (status === 'postpartum') return 'postpartum';
+  if (status === 'postpartum_early') return 'just_gave_birth';
+  if (status === 'postpartum_late') return 'postpartum';
+
+  return status;
+}
+
+function normalizeBackendTrimester(user: any): string | undefined {
+  const rawTrimester =
+    user?.trimester ??
+    user?.pregnancyStage ??
+    user?.stage ??
+    undefined;
+
+  if (!rawTrimester) return undefined;
+
+  const trimester = String(rawTrimester).toLowerCase();
+
+  const map: Record<string, string> = {
+    first: '1',
+    second: '2',
+    third: '3',
+    term: '3',
+    '1st': '1',
+    '2nd': '2',
+    '3rd': '3',
+    trimester_1: '1',
+    trimester_2: '2',
+    trimester_3: '3',
+  };
+
+  return map[trimester] ?? trimester;
+}
+
+async function loadQuestions(userStatus: string, trimester?: string): Promise<Question[]> {
+  if (!userStatus) return [];
+
+  const trimesterMap: Record<string, string> = {
+    first: '1',
+    second: '2',
+    third: '3',
+    term: '3',
+  };
+
+  const mappedTrimester = trimester ? trimesterMap[trimester] || trimester : undefined;
+
+  const url = mappedTrimester
+    ? `/api/check/questions/${encodeURIComponent(userStatus)}?trimester=${encodeURIComponent(mappedTrimester)}`
+    : `/api/check/questions/${encodeURIComponent(userStatus)}`;
+
+  const res = await fetch(url, {
+    method: 'GET',
+    cache: 'no-store',
+  });
+
+  const data = await res.json().catch(() => null);
+
+  const questions = Array.isArray(data)
+    ? data
+    : Array.isArray(data?.questions)
+      ? data.questions
+      : Array.isArray(data?.data)
+        ? data.data
+        : Array.isArray(data?.body)
+          ? data.body
+          : [];
+
+  if (!res.ok) {
+    console.error('Failed to load questions:', data);
+    return [];
+  }
+
+  if (!questions.length) {
+    console.error('[check] No questions found from proxy:', {
+      userStatus,
+      trimester,
+      response: data,
+    });
+  }
+
+  return questions;
+}
 
 export default function CheckPageClient() {
   const router = useRouter()
@@ -56,9 +152,28 @@ export default function CheckPageClient() {
 
         setUser(currentUser)
 
-        const loadedQuestions = await getQuestions(
-          currentUser.status,
-          currentUser.trimester
+        const backendUserStatus = normalizeBackendUserStatus(currentUser);
+        const backendTrimester = normalizeBackendTrimester(currentUser);
+
+        console.log('[check] resolved user for questions:', {
+          currentUser,
+          backendUserStatus,
+          backendTrimester,
+        });
+
+        if (!backendUserStatus || backendUserStatus === 'unknown') {
+          console.error('[check] Cannot load questions because user status is missing/unknown:', currentUser);
+          return;
+        }
+
+        const finalTrimester =
+          backendUserStatus === 'pregnant'
+            ? backendTrimester ?? '3'
+            : backendTrimester;
+
+        const loadedQuestions = await loadQuestions(
+          backendUserStatus,
+          finalTrimester,
         )
 
         if (!Array.isArray(loadedQuestions) || loadedQuestions.length === 0) {

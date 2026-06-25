@@ -80,17 +80,30 @@ export async function getQuestions(userStatus: string, trimester?: string): Prom
     })
     
     // Handle both direct array response and wrapped response
-    let questionsData = response.body
+    let questionsData: unknown = response.body;
+
     if (response.success === false) {
       console.error(' [Check Actions] Response indicates failure:', response)
       return []
     }
-    
-    // If response.body is not an array, try response itself
-    if (!Array.isArray(questionsData) && Array.isArray(response)) {
-      questionsData = response
+
+    // Normalize response shape
+    if (!Array.isArray(questionsData)) {
+      const responseAny = response as any;
+
+      if (Array.isArray(responseAny)) {
+        questionsData = responseAny;
+      } else if (Array.isArray(responseAny.data)) {
+        questionsData = responseAny.data;
+      } else if (Array.isArray(responseAny.questions)) {
+        questionsData = responseAny.questions;
+      } else if (Array.isArray(responseAny.body?.data)) {
+        questionsData = responseAny.body.data;
+      } else if (Array.isArray(responseAny.body?.questions)) {
+        questionsData = responseAny.body.questions;
+      }
     }
-    
+
     // Ensure we return an array
     if (!Array.isArray(questionsData)) {
       console.warn(' [Check Actions] Backend returned non-array, returning empty:', typeof questionsData, questionsData)
